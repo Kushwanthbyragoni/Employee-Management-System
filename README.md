@@ -53,8 +53,6 @@ Employee-Management-System/
 │── backend/
 │   ├── server1.js
 │   
-│
-│── package.json
 │── README.md
 ```
 
@@ -79,7 +77,7 @@ npm install multer
 ### 3️⃣ Configure Database
 
 * Create a MySQL database
-* Update database credentials inside `database.js`
+* Update database credentials inside `server1.js`
 
 Example:
 
@@ -106,24 +104,11 @@ http://localhost:5000
 
 ---
 
-## 📸 Screenshots
-
-(Add your project screenshots here)
-
-```
-![Dashboard](screenshots/dashboard.png)<img width="460" height="400" alt="image" src="https://github.com/user-attachments/assets/fda585b5-650c-4b31-a116-ffe663e5e875" />
-<img width="1919" height="983" alt="Screenshot 2026-02-26 184429" src="https://github.com/user-attachments/assets/8672cf10-fe4e-474a-a1dc-74c7af15f91b" />
-<img width="1718" height="911" alt="Screenshot 2026-02-26 184440" src="https://github.com/user-attachments/assets/9948581c-8734-40e8-a6d9-f253d2e39879" />
-
-![Form](screenshots/form.png)
-```
-
----
 
 ## 🎯 Key Highlights
 
 * Clean and minimal UI design for better user experience
-* Structured backend with REST API integration
+* Structured backend with Node.js integration
 * SQL database connectivity for persistent storage
 * Scalable architecture for future enhancements
 * Can check if system online or not
