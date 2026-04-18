@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EMS — CEO Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="shared.css"/>
+  <style>
+    .self-profile-modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.65);backdrop-filter:blur(6px);z-index:1000;justify-content:center;align-items:center;}
+    .self-profile-modal.open{display:flex;}
+    .sp-box{background:#fff;border-radius:18px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,0.18);}
+    .sp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+    .sp-header h3{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);margin:0 0 4px;}
+    .sp-header p{font-size:0.82rem;color:var(--muted);margin:0;}
+    .sp-close{background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;padding:0;line-height:1;}
+    .sp-close:hover{color:var(--ink);}
+    .sp-avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);}
+    .sp-avatar-circle{width:64px;height:64px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;overflow:hidden;flex-shrink:0;}
+    .sp-av-title{font-weight:600;font-size:0.88rem;color:var(--ink);margin-bottom:4px;}
+    .sp-av-sub{font-size:0.76rem;color:var(--muted);margin-bottom:8px;}
+    .sp-file-btn{display:inline-block;padding:6px 12px;background:var(--ink);color:#fff;border-radius:6px;font-size:0.76rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+    .sp-file-btn:hover{opacity:0.8;}
+    #sp_imageInput{display:none;}
+    .sp-role-tag{display:inline-block;font-size:0.72rem;font-weight:600;padding:4px 10px;border-radius:12px;margin-bottom:16px;}
+    .sp-role-tag.ceo{background:rgba(200,80,42,0.12);color:var(--accent);}
+    .sp-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+    .sp-field{margin-bottom:14px;}
+    .sp-field.full{grid-column:1/-1;}
+    .sp-field label{display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;}
+    .sp-field input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+    .sp-field input:focus{border-color:var(--accent);}
+    .sp-actions{display:flex;gap:10px;margin-top:20px;}
+    .sp-btn-save{flex:1;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;}
+    .sp-btn-save:hover{opacity:0.85;}
+    .sp-btn-cancel{flex:1;padding:11px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;cursor:pointer;}
+    .sp-btn-cancel:hover{border-color:var(--ink);}
+    .topbar-user{display:flex;align-items:center;gap:12px;}
+    .topbar-user-info{display:flex;flex-direction:column;align-items:flex-end;}
+    .topbar-user-name{font-size:0.88rem;font-weight:600;color:var(--ink);}
+    .topbar-user-dept{font-size:0.73rem;color:var(--muted);}
+    .topbar-avatar{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;overflow:hidden;cursor:pointer;flex-shrink:0;border:2px solid var(--border);transition:border-color 0.2s;}
+    .topbar-avatar:hover{border-color:var(--accent);}
+    .btn-logout-top{display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);color:var(--muted);padding:7px 12px;border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.15s;}
+    .btn-logout-top:hover{border-color:var(--accent);color:var(--accent);}
+    .toast{display:none;position:fixed;bottom:28px;right:28px;background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-size:0.84rem;font-weight:500;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.22);align-items:center;gap:8px;}
+    .toast.show{display:flex;}
+    .btn-del-row{font-size:0.72rem;background:none;border:1.5px solid rgba(200,80,42,0.3);color:var(--accent);padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;white-space:nowrap;}
+    .btn-del-row:hover{background:rgba(200,80,42,0.08);border-color:var(--accent);}
+    .confirm-modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.7);backdrop-filter:blur(8px);z-index:1100;justify-content:center;align-items:center;}
+    .confirm-modal.open{display:flex;}
+    .confirm-box{background:#fff;border-radius:18px;width:400px;max-width:92vw;padding:34px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.2);}
+    .confirm-icon{width:56px;height:56px;border-radius:50%;background:rgba(200,80,42,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+    .confirm-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--ink);margin-bottom:8px;}
+    .confirm-sub{font-size:0.84rem;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+    .confirm-btns{display:flex;gap:10px;}
+    .btn-confirm-del{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+    .btn-confirm-del:hover{opacity:0.85;}
+    .btn-confirm-cancel{flex:1;padding:12px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;cursor:pointer;}
+    .btn-confirm-cancel:hover{border-color:var(--ink);}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+    .kpi-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:20px 22px;position:relative;overflow:hidden;}
+    .kpi-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 0 0 60px;opacity:0.08;}
+    .kpi-card.red::after{background:var(--accent);}.kpi-card.blue::after{background:#2a6dc8;}.kpi-card.gold::after{background:#d4a843;}.kpi-card.green::after{background:#6bc87a;}
+    .kpi-card .val{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--ink);line-height:1;}
+    .kpi-card .lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:6px;}
+    .chart-wrap{position:relative;height:220px;}
+    .chart-wrap-lg{position:relative;height:280px;}
+    .filter-row{display:flex;gap:10px;flex-wrap:wrap;}
+    .filter-row input,.filter-row select{padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;}
+    .filter-row input:focus,.filter-row select:focus{border-color:var(--accent);}
+    .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6bc87a;margin-right:5px;animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+    .leave-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;transition:border-color 0.15s;}
+    .leave-card:hover{border-color:rgba(200,80,42,0.3);}
+    .leave-actions{display:flex;gap:8px;margin-top:12px;}
+    .btn-approve{flex:1;padding:8px;background:rgba(107,200,122,0.12);color:#3a9e4a;border:1.5px solid rgba(107,200,122,0.4);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:background 0.15s;}
+    .btn-approve:hover{background:rgba(107,200,122,0.25);}
+    .btn-reject{flex:1;padding:8px;background:rgba(200,80,42,0.08);color:var(--accent);border:1.5px solid rgba(200,80,42,0.3);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:background 0.15s;}
+    .btn-reject:hover{background:rgba(200,80,42,0.15);}
+    .hr-card{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);transition:border-color 0.15s;}
+    .hr-card.absent{background:rgba(200,80,42,0.04);border-color:rgba(200,80,42,0.2);}
+    .hr-card.present{background:var(--card);}
+    /* HR role badge in tables */
+    .role-pill-hr{font-size:0.66rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(212,168,67,0.14);color:#b8901e;white-space:nowrap;}
+    .role-pill-emp{font-size:0.66rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(42,109,200,0.1);color:#2a6dc8;white-space:nowrap;}
+    /* ── F1 Podium ── */
+    .podium-stage{display:flex;align-items:flex-end;justify-content:center;gap:0;padding:10px 10px 0;min-height:300px;}
+    .podium-slot{display:flex;flex-direction:column;align-items:center;flex:1;max-width:160px;}
+    .podium-avatar-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;}
+    .podium-avatar{width:58px;height:58px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,0.18);flex-shrink:0;}
+    .podium-avatar img{width:100%;height:100%;object-fit:cover;}
+    .podium-crown{font-size:1.4rem;line-height:1;margin-bottom:3px;}
+    .podium-name{font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;font-weight:700;color:var(--ink);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;margin-top:5px;}
+    .podium-dept{font-size:0.66rem;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+    .podium-stat{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;color:var(--muted);margin-top:3px;text-align:center;}
+    .podium-block{width:100%;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.2);position:relative;box-shadow:inset 0 4px 12px rgba(255,255,255,0.15);transform-origin:bottom;animation:podiumRise 0.6s cubic-bezier(0.34,1.56,0.64,1) both;}
+    .podium-block::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.18) 1px,transparent 1px);background-size:16px 16px;border-radius:10px 10px 0 0;pointer-events:none;}
+    .podium-slot.first  .podium-block{height:150px;background:linear-gradient(160deg,#d4a843 0%,#f0c040 50%,#b8901e 100%);animation-delay:0.25s;}
+    .podium-slot.second .podium-block{height:110px;background:linear-gradient(160deg,#9ca3af 0%,#d1d5db 50%,#6b7280 100%);animation-delay:0.1s;}
+    .podium-slot.third  .podium-block{height:80px; background:linear-gradient(160deg,#c8502a 0%,#e07050 50%,#a04020 100%);animation-delay:0.05s;}
+    .podium-base{height:18px;background:var(--border);width:100%;}
+    @keyframes podiumRise{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
+
+    /* Month legend pills */
+    .month-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+    .month-pill{font-size:0.72rem;font-weight:600;padding:3px 10px;border-radius:20px;cursor:pointer;border:1.5px solid var(--border);color:var(--muted);background:#fff;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;}
+    .month-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(200,80,42,0.06);}
+    .month-pill.future{border-color:var(--border);color:rgba(107,114,128,0.4);background:var(--card);cursor:default;}
+    /* Attendance section tabs */
+    .att-tabs{display:flex;gap:0;margin-bottom:16px;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;width:fit-content;}
+    .att-tab{padding:8px 20px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);border:none;transition:all 0.15s;}
+    .att-tab.active{background:var(--ink);color:#fff;}
+    .att-tab:hover:not(.active){background:var(--card);}
+
+    /* ── Employee Cards (CEO) ── */
+    .ceo-emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+    .ceo-emp-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color 0.18s,box-shadow 0.18s,transform 0.15s;}
+    .ceo-emp-card:hover{border-color:var(--accent);box-shadow:0 4px 18px rgba(200,80,42,0.1);transform:translateY(-1px);}
+    .ceo-emp-card .c-avatar{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.84rem;font-weight:700;flex-shrink:0;overflow:hidden;border:2px solid var(--border);}
+    .ceo-emp-card .c-avatar img{width:100%;height:100%;object-fit:cover;}
+    .ceo-emp-card .c-meta{flex:1;min-width:0;}
+    .ceo-emp-card .c-name{font-weight:700;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .ceo-emp-card .c-dept{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+    .ceo-emp-card .c-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+    .spill{font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:12px;letter-spacing:0.03em;}
+    .spill.in{background:rgba(107,200,122,0.14);color:#3a9e4a;}
+    .spill.out{background:rgba(200,80,42,0.09);color:var(--accent);}
+    .spill.logged-off{background:rgba(42,109,200,0.12);color:#2a6dc8;}
+    .c-btn-view{font-size:0.7rem;background:none;border:1.5px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;white-space:nowrap;}
+    .c-btn-view:hover{border-color:var(--accent);color:var(--accent);}
+    .c-btn-del{font-size:0.7rem;background:none;border:1.5px solid rgba(200,80,42,0.3);color:var(--accent);padding:3px 9px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;white-space:nowrap;}
+    .c-btn-del:hover{background:rgba(200,80,42,0.07);border-color:var(--accent);}
+    /* ── Employee Profile Modal (CEO) ── */
+    .emp-profile-modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.65);backdrop-filter:blur(6px);z-index:1050;justify-content:center;align-items:center;}
+    .emp-profile-modal.open{display:flex;}
+    .ep-box{background:#fff;border-radius:18px;width:560px;max-width:95vw;max-height:92vh;overflow-y:auto;padding:34px;box-shadow:0 24px 80px rgba(0,0,0,0.18);}
+    .ep-avatar{width:72px;height:72px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;overflow:hidden;flex-shrink:0;border:3px solid var(--border);}
+    .ep-avatar img{width:100%;height:100%;object-fit:cover;}
+    .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+    .ep-field{background:var(--card);border-radius:10px;padding:11px 14px;}
+    .ep-field.full{grid-column:1/-1;}
+    .ep-field .lbl{font-size:0.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+    .ep-field .val{font-size:0.88rem;font-weight:600;color:var(--ink);margin-top:3px;}
+    .ep-att-mini tr td,.ep-att-mini tr th{padding:8px 10px;font-size:0.79rem;border-bottom:1px solid var(--border);}
+    .ep-att-mini thead th{font-family:'IBM Plex Mono',monospace;font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+    .ep-att-mini tr:last-child td{border-bottom:none;}
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <div class="brand-mark">EM</div>
+      <div><div class="logo-title">EMS</div><div class="logo-sub">CEO Dashboard</div></div>
+    </div>
+    <nav class="sidebar__nav">
+      <a class="sidebar__nav--item active" href="#" onclick="showSection('overview')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('employees')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>All Employees
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('attendance')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('analytics')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Analytics
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('leaves')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 14h2M12 14h4M8 18h2"/></svg>Leaves
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="openSelfProfile()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile
+      </a>
+    </nav>
+    <div class="sidebar__footer">
+      <div class="sidebar__footer--dot"></div>
+      <span id="sidebarUser">—</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar__left">
+        <h1 class="topbar__title" id="pageTitle">Executive Overview</h1>
+        <span class="topbar__count"><span class="live-dot"></span>Live · refreshes every 30s</span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="topbarName">—</div>
+          <div class="topbar-user-dept" id="topbarDept">Chief Executive Officer</div>
+        </div>
+        <div class="topbar-avatar" id="topbarAvatar" onclick="openSelfProfile()" title="Edit My Profile"></div>
+        <div class="role-badge ceo">CEO</div>
+        <button class="btn-logout-top" onclick="logout()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- OVERVIEW -->
+    <div id="section-overview" class="content-section">
+      <div class="kpi-grid">
+        <div class="kpi-card red"><div class="val" id="k-total">—</div><div class="lbl">Total Staff</div></div>
+        <div class="kpi-card green"><div class="val" id="k-present">—</div><div class="lbl">Present Today</div></div>
+        <div class="kpi-card gold"><div class="val" id="k-rate">—%</div><div class="lbl">Attendance Rate</div></div>
+        <div class="kpi-card blue"><div class="val" id="k-dept">—</div><div class="lbl">Departments</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel__header"><span>Weekly Attendance Trend</span><div class="panel__header--line"></div></div>
+          <div class="chart-wrap"><canvas id="weekChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel__header"><span>Department Breakdown</span><div class="panel__header--line"></div></div>
+          <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel__header"><span>Absent Today</span><div class="panel__header--line"></div></div>
+        <div id="absentList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
+      </div>
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel__header"><span id="hrPanelTitle">HR Staff Today</span><div class="panel__header--line"></div></div>
+        <div id="hrAbsentList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;"></div>
+      </div>
+    </div>
+
+    <!-- ALL EMPLOYEES (now includes HR) -->
+    <div id="section-employees" class="content-section" style="display:none;">
+      <div class="panel">
+        <div class="panel__header"><span>Full Staff Registry</span><div class="panel__header--line"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div class="filter-row">
+            <input type="text" id="ceEmpSearch" placeholder="Search name…" oninput="filterCeoEmployees()"/>
+            <select id="ceDeptFilter" onchange="filterCeoEmployees()"><option value="">All Departments</option></select>
+            <select id="ceRoleFilter" onchange="filterCeoEmployees()">
+              <option value="">All Roles</option>
+              <option value="employee">Employees</option>
+              <option value="hr">HR Staff</option>
+            </select>
+          </div>
+          <span id="empCountLabel" style="font-size:0.8rem;color:var(--muted);"></span>
+        </div>
+        <!-- ✅ Card grid instead of table -->
+        <div id="ceoEmpGrid" class="ceo-emp-grid"></div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE (Employee tab + HR tab) -->
+    <div id="section-attendance" class="content-section" style="display:none;">
+      <div class="panel">
+        <div class="panel__header"><span>All Attendance Records</span><div class="panel__header--line"></div></div>
+
+        <!-- ✅ NEW: Tab switcher — Employees / HR Staff -->
+        <div class="att-tabs">
+          <button class="att-tab active" id="attTabEmp" onclick="switchAttTab('emp')">Employees</button>
+          <button class="att-tab" id="attTabHR" onclick="switchAttTab('hr')">HR Staff</button>
+        </div>
+
+        <!-- Employee attendance filters + table -->
+        <div id="attPanelEmp">
+          <div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div class="filter-row">
+              <input type="text" id="ceAttSearch" placeholder="Search employee…" oninput="filterCeoAttendance()"/>
+              <input type="date" id="ceAttDate" onchange="filterCeoAttendance()"/>
+              <select id="ceAttStatus" onchange="filterCeoAttendance()">
+                <option value="">All</option><option value="present">Complete</option><option value="partial">Partial</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Employee</th><th>Dept</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Hours</th><th>Status</th></tr></thead>
+              <tbody id="ceAttBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ✅ NEW: HR attendance filters + table -->
+        <div id="attPanelHR" style="display:none;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+            <div class="filter-row">
+              <input type="text" id="hrAttSearch" placeholder="Search HR staff…" oninput="filterHRAttendance()"/>
+              <input type="date" id="hrAttDate" onchange="filterHRAttendance()"/>
+              <select id="hrAttStatus" onchange="filterHRAttendance()">
+                <option value="">All</option><option value="present">Complete</option><option value="partial">Partial</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>HR Staff</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Hours</th><th>Status</th></tr></thead>
+              <tbody id="hrAttBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="section-analytics" class="content-section" style="display:none;">
+      <div class="two-col">
+
+        <!-- LEFT: F1 Podium — Top 3 Performers -->
+        <div class="panel">
+          <div class="panel__header"><span>Top Performers Podium</span><div class="panel__header--line"></div><span id="podiumPeriodLabel" style="font-size:0.7rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;"></span></div>
+          <div id="podiumWrap" style="padding:10px 0 4px;">
+            <!-- rendered by renderPodium() -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Hours Distribution -->
+        <div class="panel">
+          <div class="panel__header"><span>Hours Distribution</span><div class="panel__header--line"></div></div>
+          <div class="chart-wrap-lg"><canvas id="hoursChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Ranks 4–10 table -->
+      <div class="panel" style="margin-top:20px;">
+        <div class="panel__header"><span>Top Performers (Last 30 Days)</span><div class="panel__header--line"></div></div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Rank</th><th>Employee</th><th>Dept</th><th>Days Present</th><th>Total Hours</th><th>Avg hrs/day</th></tr></thead>
+            <tbody id="perfBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEAVES -->
+    <div id="section-leaves" class="content-section" style="display:none;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;">
+        <div class="kpi-card gold" style="padding:16px 20px;"><div class="val" style="font-size:1.8rem;" id="lv-pending">—</div><div class="lbl">Pending</div></div>
+        <div class="kpi-card green" style="padding:16px 20px;"><div class="val" style="font-size:1.8rem;" id="lv-approved">—</div><div class="lbl">Approved</div></div>
+        <div class="kpi-card red" style="padding:16px 20px;"><div class="val" style="font-size:1.8rem;" id="lv-rejected">—</div><div class="lbl">Rejected</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel__header">
+          <span>All Leave Requests</span><div class="panel__header--line"></div>
+          <span id="leavePendingBadge" style="display:none;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(212,168,67,0.15);color:#b8901e;flex-shrink:0;"></span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <select id="ceoLeaveRoleFilter" onchange="renderCeoLeaves()" style="padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;">
+            <option value="">All Roles</option><option value="employee">Employees Only</option><option value="hr">HR Staff Only</option>
+          </select>
+          <select id="ceoLeaveStatusFilter" onchange="renderCeoLeaves()" style="padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;">
+            <option value="">All Statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+          </select>
+          <select id="ceoLeaveTypeFilter" onchange="renderCeoLeaves()" style="padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;">
+            <option value="">All Types</option><option value="casual">Casual</option><option value="sick">Sick</option><option value="earned">Earned</option><option value="unpaid">Unpaid</option><option value="other">Other</option>
+          </select>
+          <input type="text" id="ceoLeaveSearch" placeholder="Search by name…" oninput="renderCeoLeaves()" style="flex:1;min-width:160px;padding:8px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;"/>
+        </div>
+        <div id="ceoLeaveList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- EMPLOYEE PROFILE MODAL (CEO view) -->
+<div class="emp-profile-modal" id="empProfileModal" onclick="closeEmpProfileModal(event)">
+  <div class="ep-box">
+    <div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:4px;">
+      <div class="ep-avatar" id="epAvatar"></div>
+      <div style="flex:1;">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);" id="epName"></div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-top:3px;" id="epSub"></div>
+        <div id="epRolePill" style="margin-top:6px;"></div>
+      </div>
+      <button onclick="document.getElementById('empProfileModal').classList.remove('open')" style="background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;line-height:1;padding:0;">✕</button>
+    </div>
+    <div class="ep-grid" id="epGrid"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <svg width="26" height="26" fill="none" stroke="#c8502a" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <div class="confirm-title">Delete Employee?</div>
+    <div class="confirm-sub" id="confirmSubText">This will permanently remove the employee and all their records.</div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-del" onclick="executeDelete()">Yes, Delete</button>
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELF-PROFILE MODAL -->
+<div class="self-profile-modal" id="selfProfileModal" onclick="closeSelfProfile(event)">
+  <div class="sp-box">
+    <div class="sp-header">
+      <div><h3>My Profile</h3><p>Update your details and profile photo</p></div>
+      <button class="sp-close" onclick="closeSelfProfile()">✕</button>
+    </div>
+    <div class="sp-avatar-row">
+      <div class="sp-avatar-circle" id="sp_avatarPreview"></div>
+      <div class="sp-avatar-info">
+        <div class="sp-av-title">Profile Photo</div>
+        <div class="sp-av-sub">Your photo will be saved to the system and visible to all users.</div>
+        <label for="sp_imageInput" class="sp-file-btn">Choose Photo</label>
+        <input type="file" id="sp_imageInput" accept="image/*" onchange="sp_previewAvatar(event)"/>
+      </div>
+    </div>
+    <div id="sp_roleTag"></div>
+    <div class="sp-form-grid">
+      <div class="sp-field"><label>First Name</label><input id="sp_firstName" type="text"/></div>
+      <div class="sp-field"><label>Last Name</label><input id="sp_lastName" type="text"/></div>
+      <div class="sp-field full"><label>Phone (optional)</label><input id="sp_phone" type="tel" placeholder="—"/></div>
+      <div class="sp-field full"><label>Email (optional)</label><input id="sp_email" type="email" placeholder="—"/></div>
+    </div>
+    <div class="sp-actions">
+      <button class="sp-btn-save" onclick="saveSelfProfile()">Save Changes</button>
+      <button class="sp-btn-cancel" onclick="closeSelfProfile()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script src="shared-profile.js"></script>
+<script>
+let currentUser = null;
+let allEmployees = [];    // regular employees only
+let allHrUsers   = [];    // HR staff from /hr/users
+let allAttendance = [];   // employee attendance
+let allHrAttendance = []; // HR attendance
+let allCeoLeaves = [];
+let charts = {};
+
+// Month config for Analytics
+const MONTHS = [
+  { label:'Jan', key:'2026-01' },{ label:'Feb', key:'2026-02' },
+  { label:'Mar', key:'2026-03' },{ label:'Apr', key:'2026-04' },
+  { label:'May', key:'2026-05' },{ label:'Jun', key:'2026-06' },
+  { label:'Jul', key:'2026-07' },
+];
+function currentMonthKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+}
+function isPastOrCurrent(key) { return key <= currentMonthKey(); }
+let selectedMonthKey = currentMonthKey();
+
+async function init() {
+  const raw = sessionStorage.getItem('user');
+  if (!raw) { window.location.href='login.html'; return; }
+  currentUser = JSON.parse(raw);
+  window.currentUser = currentUser;
+  if (currentUser.role !== 'ceo') { window.location.href='login.html'; return; }
+  document.getElementById('sidebarUser').textContent = currentUser.firstName+' '+currentUser.lastName;
+  document.getElementById('sp_roleTag').innerHTML = `<div class="sp-role-tag ceo">● Chief Executive Officer</div>`;
+  updateTopbarUser();
+  await loadAll();
+  await renderOverview();
+  setInterval(async () => {
+    await loadAll();
+    await renderOverview();
+    if (document.getElementById('section-attendance').style.display !== 'none') { renderCeoAttTable(allAttendance); renderHRAttTable(allHrAttendance); }
+    if (document.getElementById('section-employees').style.display  !== 'none') renderCeoEmpTable();
+    if (document.getElementById('section-leaves').style.display     !== 'none') loadCeoLeaves();
+    if (document.getElementById('section-analytics').style.display  !== 'none') renderPerformance();
+  }, 30000);
+}
+
+function todayLocal() { return new Date().toLocaleDateString('en-CA', { timeZone:'Asia/Kolkata' }); }
+function fmtTime(t) {
+  if (!t) return '—';
+  const [h,m] = t.split(':').map(Number);
+  return `${(h%12||12)}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const clean = String(d).slice(0,10);
+  const [y,mo,day] = clean.split('-');
+  if (!y||!mo||!day) return String(d);
+  return `${day}-${mo}-${y}`;
+}
+function fmtHours(val) {
+  if (!val && val !== 0) return '—';
+  const total = parseFloat(val);
+  if (isNaN(total)) return '—';
+  const h = Math.floor(total), m = Math.round((total-h)*60);
+  if (h===0) return `${m}m`;
+  if (m===0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+// ─── LOAD ALL DATA ────────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [empRes, attRes] = await Promise.all([
+      fetch('http://localhost:5000/getEmployees'),
+      fetch('http://localhost:5000/attendance/all')
+    ]);
+    allEmployees  = await empRes.json();
+    allAttendance = await attRes.json();
+    allAttendance = allAttendance.map(a => ({ ...a, date: a.date ? String(a.date).slice(0,10) : a.date }));
+  } catch(e) { console.error(e); }
+
+  // ✅ Load HR users
+  try {
+    const r = await fetch('http://localhost:5000/hr/users');
+    if (r.ok) allHrUsers = await r.json();
+  } catch(e) { allHrUsers = []; }
+
+  // ✅ Load HR attendance
+  try {
+    const r = await fetch('http://localhost:5000/hr/attendance/all');
+    if (r.ok) {
+      allHrAttendance = await r.json();
+      allHrAttendance = allHrAttendance.map(a => ({ ...a, date: a.date ? String(a.date).slice(0,10) : a.date }));
+    }
+  } catch(e) { allHrAttendance = []; }
+}
+
+// ─── OVERVIEW ─────────────────────────────────────────────────────────────────
+async function renderOverview() {
+  const today = todayLocal();
+
+  // Employee present
+  const todayRecs  = allAttendance.filter(a => a.date === today);
+  const presentEmpIds = new Set(todayRecs.map(a => a.employee_id));
+
+  // HR present
+  const hrPresentCount = allHrAttendance.filter(a => a.date === today && a.check_in).length;
+
+  const totalPresent = presentEmpIds.size + hrPresentCount;
+
+  // ✅ FIX 1: Total = employees + HR staff (excludes CEO)
+  const totalStaff = allEmployees.length + allHrUsers.length;
+  const depts      = new Set(allEmployees.map(e => e.department).filter(Boolean));
+  const rate       = totalStaff ? Math.round(totalPresent / totalStaff * 100) : 0;
+
+  document.getElementById('k-total').textContent   = totalStaff;
+  document.getElementById('k-present').textContent = totalPresent;
+  document.getElementById('k-rate').textContent    = rate + '%';
+  document.getElementById('k-dept').textContent    = depts.size;
+
+  // Absent employees
+  const absent = allEmployees.filter(e => !presentEmpIds.has(e.id));
+  document.getElementById('absentList').innerHTML = absent.map(e => {
+    const initials = ((e.firstName||'')[0]+(e.lastName||'')[0]).toUpperCase();
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px;border-radius:9px;background:var(--card);border:1px solid var(--border);">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;overflow:hidden;">
+        ${e.profileImage?`<img src="http://localhost:5000${e.profileImage}" style="width:100%;height:100%;object-fit:cover;" alt=""/>`:initials}
+      </div>
+      <div><div style="font-size:0.82rem;font-weight:600;">${e.firstName} ${e.lastName}</div><div style="font-size:0.7rem;color:var(--muted);">${e.department||'—'}</div></div>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:0.84rem;padding:8px 0;">All employees are present today! 🎉</div>';
+
+  populateCeoDeptFilter();
+  renderCeoEmpTable();
+  renderCeoAttTable(allAttendance);
+  renderHRAttTable(allHrAttendance);
+  await drawWeekChart();
+  drawDeptChart();
+  renderHrStatus();
+}
+
+// ─── HR STATUS PANEL (Overview) ───────────────────────────────────────────────
+async function renderHrStatus() {
+  const el      = document.getElementById('hrAbsentList');
+  const titleEl = document.getElementById('hrPanelTitle');
+  const today   = todayLocal();
+
+  const todayAtt = allHrAttendance.filter(a => a.date === today);
+  const attMap   = {};
+  todayAtt.forEach(a => { attMap[a.user_id] = a; });
+
+  // Build HR user list from allHrUsers or fallback from attendance
+  let hrUsers = [...allHrUsers];
+  if (!hrUsers.length && allHrAttendance.length) {
+    const seen = new Set();
+    allHrAttendance.forEach(a => {
+      if (!seen.has(a.user_id)) {
+        seen.add(a.user_id);
+        hrUsers.push({ id:a.user_id, firstName:a.firstName||'HR', lastName:a.lastName||'', profileImage:'' });
+      }
+    });
+  }
+
+  if (!hrUsers.length) {
+    titleEl.textContent = 'HR Staff Today';
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.84rem;padding:8px 0;">No HR staff found.</div>';
+    return;
+  }
+
+  const absentCount = hrUsers.filter(u => !attMap[u.id] || !attMap[u.id].check_in).length;
+  titleEl.textContent = absentCount > 0 ? `HR Staff Today · ${absentCount} Absent` : 'HR Staff Today · All Present';
+
+  el.innerHTML = hrUsers.map(u => {
+    const att      = attMap[u.id];
+    const name     = `${u.firstName||'HR'} ${u.lastName||''}`.trim();
+    const initials = ((u.firstName||'H')[0]+(u.lastName||'R')[0]).toUpperCase();
+    const avatar   = u.profileImage ? `<img src="http://localhost:5000${u.profileImage}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>` : initials;
+    let statusText, statusColor, statusBg, cardClass;
+    if (!att||!att.check_in) { statusText='Absent'; statusColor='var(--accent)'; statusBg='rgba(200,80,42,0.1)'; cardClass='hr-card absent'; }
+    else if (!att.check_out) { statusText='Active'; statusColor='#3a9e4a'; statusBg='rgba(107,200,122,0.14)'; cardClass='hr-card present'; }
+    else { statusText=`Done · ${fmtHours(att.total_hours)}`; statusColor='#2a6dc8'; statusBg='rgba(42,109,200,0.1)'; cardClass='hr-card present'; }
+    const timeInfo = att&&att.check_in ? `<div style="font-size:0.69rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;">${fmtTime(att.check_in)}${att.check_out?' → '+fmtTime(att.check_out):' → Active'}</div>` : '';
+    return `<div class="${cardClass}">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;overflow:hidden;">${avatar}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:0.84rem;font-weight:600;color:var(--ink);">${name}</div><div style="font-size:0.69rem;color:var(--muted);">HR Staff</div>${timeInfo}</div>
+      <span style="font-size:0.71rem;font-weight:700;padding:3px 9px;border-radius:10px;background:${statusBg};color:${statusColor};white-space:nowrap;">${statusText}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+async function drawWeekChart() {
+  const labels = [], counts = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toLocaleDateString('en-CA', { timeZone:'Asia/Kolkata' });
+    labels.push(d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', timeZone:'Asia/Kolkata' }));
+    const empCount = allAttendance.filter(a => a.date === ds && a.check_in).length;
+    const hrCount  = allHrAttendance.filter(a => a.date === ds && a.check_in).length;
+    counts.push(empCount + hrCount);
+  }
+  const ctx = document.getElementById('weekChart').getContext('2d');
+  if (charts.week) charts.week.destroy();
+  charts.week = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Present', data:counts, borderColor:'#c8502a',
+      backgroundColor: ctx2 => { const g=ctx2.chart.ctx.createLinearGradient(0,0,0,200); g.addColorStop(0,'rgba(200,80,42,0.2)'); g.addColorStop(1,'rgba(200,80,42,0.0)'); return g; },
+      borderWidth:2, pointBackgroundColor:'#c8502a', pointRadius:4, pointHoverRadius:6, fill:true, tension:0.4 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1, callback:v=>Number.isInteger(v)?v:null, font:{ family:'IBM Plex Mono',size:10 }, color:'#6b6560' }, grid:{ color:'rgba(0,0,0,0.05)' }},
+               x:{ grid:{ display:false }, ticks:{ font:{ family:'IBM Plex Mono',size:9 }, color:'#6b6560' }}}}
+  });
+}
+
+function drawDeptChart() {
+  const depts = {};
+  allEmployees.forEach(e => { const d=e.department||'Other'; depts[d]=(depts[d]||0)+1; });
+  // ✅ Also count HR users in their dept
+  allHrUsers.forEach(u => { const d=u.department||'HR'; depts[d]=(depts[d]||0)+1; });
+  const colors   = ['#c8502a','#2a6dc8','#d4a843','#6bc87a','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+  const maxCount = Math.max(...Object.values(depts), 1);
+  const ctx = document.getElementById('deptChart').getContext('2d');
+  if (charts.dept) charts.dept.destroy();
+  charts.dept = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:Object.keys(depts), datasets:[{ data:Object.values(depts), backgroundColor:colors, borderRadius:6, borderSkipped:false }]},
+    options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ beginAtZero:true, max:maxCount+1, grid:{ color:'rgba(0,0,0,0.05)' }, ticks:{ stepSize:1, callback:v=>Number.isInteger(v)?v:null, font:{ family:'IBM Plex Mono',size:10 }}},
+               y:{ grid:{ display:false }, ticks:{ font:{ family:'IBM Plex Sans',size:11 }}}}}
+  });
+}
+
+function buildMonthPills() {
+  const pills = document.getElementById('monthPills');
+  pills.innerHTML = MONTHS.map(m => {
+    const past   = isPastOrCurrent(m.key);
+    const active = m.key === selectedMonthKey ? ' active' : '';
+    const cls    = past ? `month-pill${active}` : 'month-pill future';
+    const click  = past ? `onclick="selectMonth('${m.key}')"` : '';
+    return `<span class="${cls}" ${click}>${m.label} 2026</span>`;
+  }).join('');
+}
+
+function selectMonth(key) {
+  if (!isPastOrCurrent(key)) return;
+  selectedMonthKey = key;
+  buildMonthPills();
+  drawMonthChart();
+}
+
+function drawMonthChart() {
+  buildMonthPills();
+  const [year, month] = selectedMonthKey.split('-').map(Number);
+  const daysInMonth   = new Date(year, month, 0).getDate();
+  const today         = todayLocal();
+  const isFuture      = selectedMonthKey > currentMonthKey();
+  const labels = [], counts = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    labels.push(String(day));
+    if (isFuture || ds > today) {
+      counts.push(null);
+    } else {
+      const empCount = allAttendance.filter(a => a.date === ds && a.check_in).length;
+      const hrCount  = allHrAttendance.filter(a => a.date === ds && a.check_in).length;
+      counts.push(empCount + hrCount);
+    }
+  }
+  const maxVal = Math.max(...counts.filter(v => v !== null), 1);
+  const ctx = document.getElementById('monthChart').getContext('2d');
+  if (charts.month) charts.month.destroy();
+  charts.month = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Present', data:counts, borderColor:'#2a6dc8',
+      backgroundColor: ctx2 => { const g=ctx2.chart.ctx.createLinearGradient(0,0,0,240); g.addColorStop(0,'rgba(42,109,200,0.18)'); g.addColorStop(1,'rgba(42,109,200,0.0)'); return g; },
+      borderWidth:2.5, pointRadius:counts.map(v=>v===null?0:3), pointBackgroundColor:'#2a6dc8', pointHoverRadius:6, fill:true, tension:0.35, spanGaps:false }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false },
+        tooltip:{ callbacks:{ title:items=>{ const d=items[0].label; const mn=new Date(year,month-1,1).toLocaleString('en-IN',{month:'long'}); return `${d} ${mn} ${year}`; }, label:item=>item.raw===null?'  No data yet':`  Present: ${item.raw}` }, backgroundColor:'#0d0f14', titleFont:{ family:'IBM Plex Mono',size:11 }, bodyFont:{ family:'IBM Plex Mono',size:11 }, padding:10, cornerRadius:8 }},
+      scales:{ y:{ beginAtZero:true, suggestedMax:maxVal+2, ticks:{ stepSize:1, callback:v=>Number.isInteger(v)?v:null, font:{ family:'IBM Plex Mono',size:10 }, color:'#6b6560' }, grid:{ color:'rgba(0,0,0,0.05)' }},
+               x:{ grid:{ display:false }, ticks:{ callback:(val,idx)=>(idx+1)%5===1?labels[idx]:'', font:{ family:'IBM Plex Mono',size:10 }, color:'#6b6560' }}}}
+  });
+}
+
+function drawHoursChart() {
+  const b = {'0–4':0,'4–6':0,'6–8':0,'8–10':0,'10+':0};
+  // Include both employee and HR hours
+  [...allAttendance, ...allHrAttendance].filter(a => a.total_hours).forEach(a => {
+    const h = parseFloat(a.total_hours);
+    if (h<4) b['0–4']++; else if (h<6) b['4–6']++; else if (h<8) b['6–8']++; else if (h<10) b['8–10']++; else b['10+']++;
+  });
+  const ctx = document.getElementById('hoursChart').getContext('2d');
+  if (charts.hours) charts.hours.destroy();
+  charts.hours = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels:Object.keys(b), datasets:[{ data:Object.values(b), backgroundColor:['#c8502a','#d4a843','#6bc87a','#2a6dc8','#8b5cf6'], borderWidth:0 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ font:{ family:'IBM Plex Sans',size:11 }, color:'#6b6560', padding:10, boxWidth:10 }}}}
+  });
+}
+
+function renderPodium(ranked) {
+  const wrap = document.getElementById('podiumWrap');
+  if (!ranked.length) {
+    wrap.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;color:var(--muted);text-align:center;gap:10px;">
+      <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:0.3;"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <div style="font-size:0.88rem;">No attendance data in the last 30 days.</div>
+    </div>`;
+    document.getElementById('podiumPeriodLabel').textContent = '';
+    return;
+  }
+
+  // F1-style order: 2nd on left, 1st in centre, 3rd on right
+  const slots = [
+    { pos: 'second', rank: 2, data: ranked[1] || null },
+    { pos: 'first',  rank: 1, data: ranked[0] || null },
+    { pos: 'third',  rank: 3, data: ranked[2] || null },
+  ];
+
+  const crowns = { first:'🏆', second:'🥈', third:'🥉' };
+  const nums   = { first:'1', second:'2', third:'3' };
+
+  const podiumHTML = `
+    <div class="podium-stage">
+      ${slots.map(s => {
+        if (!s.data) return `<div class="podium-slot ${s.pos}">
+          <div class="podium-avatar-wrap">
+            <div class="podium-crown">${crowns[s.pos]}</div>
+            <div class="podium-avatar" style="opacity:0.3;font-size:0.75rem;">—</div>
+            <div class="podium-name" style="opacity:0.4;">No data</div>
+          </div>
+          <div class="podium-block">${nums[s.pos]}</div>
+          <div class="podium-base"></div>
+        </div>`;
+
+        const r   = s.data;
+        const emp = r.emp;
+        const initials = ((emp.firstName||'?')[0] + (emp.lastName||'')[0]).toUpperCase();
+        const avatarInner = emp.profileImage
+          ? `<img src="http://localhost:5000${emp.profileImage}" alt="${emp.firstName}"/>`
+          : initials;
+        const hoursStr = r.hours > 0 ? fmtHours(r.hours) : `${r.days}d`;
+        const avgStr   = (r.days && r.hours > 0) ? (r.hours/r.days).toFixed(1)+'h/d' : '';
+
+        return `<div class="podium-slot ${s.pos}">
+          <div class="podium-avatar-wrap">
+            <div class="podium-crown">${crowns[s.pos]}</div>
+            <div class="podium-avatar">${avatarInner}</div>
+            <div class="podium-name">${emp.firstName||'?'} ${emp.lastName||''}</div>
+            <div class="podium-dept">${emp.department||'—'}</div>
+            <div class="podium-stat">${hoursStr}${avgStr ? ' · '+avgStr : ''}</div>
+          </div>
+          <div class="podium-block">${nums[s.pos]}</div>
+          <div class="podium-base"></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  wrap.innerHTML = podiumHTML;
+}
+
+function renderPerformance() {
+  const cutoff    = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toLocaleDateString('en-CA', { timeZone:'Asia/Kolkata' });
+  const byEmp = {};
+  allAttendance.filter(a => a.date && a.date >= cutoffStr && a.check_in).forEach(a => {
+    if (!byEmp[a.employee_id]) byEmp[a.employee_id] = { days:0, hours:0 };
+    byEmp[a.employee_id].days++;
+    byEmp[a.employee_id].hours += parseFloat(a.total_hours||0);
+  });
+  const ranked = Object.entries(byEmp)
+    .map(([id,d]) => ({ emp:allEmployees.find(e=>e.id==id)||{}, ...d }))
+    .sort((a,b) => b.days!==a.days?b.days-a.days:b.hours-a.hours).slice(0,10);
+
+  // Render F1 podium for top 3
+  renderPodium(ranked.slice(0, 3));
+
+  // Update period label
+  const label = document.getElementById('podiumPeriodLabel');
+  if (label) label.textContent = 'Last 30 days';
+
+  // Ranks 4–10 in table
+  const rest = ranked.slice(3);
+  document.getElementById('perfBody').innerHTML = rest.map((r,i) => {
+    const avg  = r.days&&r.hours>0?(r.hours/r.days).toFixed(1):'—';
+    const rank = i + 4;
+    return `<tr>
+      <td><strong>#${rank}</strong></td>
+      <td><strong>${r.emp.firstName||'?'} ${r.emp.lastName||''}</strong></td>
+      <td>${r.emp.department||'—'}</td>
+      <td style="font-weight:700;">${r.days}</td>
+      <td><strong>${r.hours>0?fmtHours(r.hours):'—'}</strong></td>
+      <td>${avg!=='—'?avg+'h':'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;font-size:0.84rem;">Only top 3 shown — no additional performers.</td></tr>';
+}
+
+// ─── EMPLOYEES CARD GRID (includes HR) ───────────────────────────────────────
+function populateCeoDeptFilter() {
+  const depts = [...new Set([...allEmployees.map(e=>e.department), ...allHrUsers.map(u=>u.department||'HR')].filter(Boolean))];
+  const sel   = document.getElementById('ceDeptFilter');
+  while (sel.options.length > 1) sel.remove(1);
+  depts.forEach(d => { const o=document.createElement('option'); o.value=d; o.textContent=d; sel.appendChild(o); });
+}
+
+function renderCeoEmpTable(filteredList) {
+  const today = todayLocal();
+
+  // ✅ Build today's attendance maps for 3-state status
+  const empTodayMap = {};
+  allAttendance.filter(a => a.date === today).forEach(a => { empTodayMap[a.employee_id] = a; });
+  const hrTodayMap = {};
+  allHrAttendance.filter(a => a.date === today).forEach(a => { hrTodayMap[a.user_id] = a; });
+
+  // Build combined list if not filtered
+  let combined = filteredList;
+  if (!combined) {
+    const empRows = allEmployees.map(e => ({ ...e, _role:'employee' }));
+    const hrRows  = allHrUsers.map((u, i) => ({
+      id: u.id, firstName: u.firstName, lastName: u.lastName,
+      empId: `HR ${u.hr_number || (i+1)}`,
+      department: 'HR',
+      age: u.age||null, salary: u.salary||null,
+      phone: u.phone||null, email: u.email||null,
+      profileImage: u.profileImage||'', _role:'hr', _hrId: u.id,
+      hr_number: u.hr_number || (i+1)
+    }));
+    combined = [...empRows, ...hrRows];
+  }
+
+  document.getElementById('empCountLabel').textContent = combined.length + ' staff';
+
+  const grid = document.getElementById('ceoEmpGrid');
+  if (!combined.length) {
+    grid.innerHTML = '<div style="color:var(--muted);grid-column:1/-1;padding:16px 0;text-align:center;">No staff found.</div>';
+    return;
+  }
+
+  grid.innerHTML = combined.map(emp => {
+    const isHR    = emp._role === 'hr';
+    const initials = ((emp.firstName||'')[0]+(emp.lastName||'')[0]).toUpperCase();
+    const avatarHtml = emp.profileImage
+      ? `<img src="http://localhost:5000${emp.profileImage}" alt="${emp.firstName}"/>`
+      : initials;
+
+    // ✅ 3-state status: Out / In / Logged Off
+    const rec = isHR ? hrTodayMap[emp._hrId||emp.id] : empTodayMap[emp.id];
+    let pillClass, pillText;
+    if (!rec || !rec.check_in) {
+      pillClass = 'out';        pillText = '● Out';
+    } else if (!rec.check_out) {
+      pillClass = 'in';         pillText = '● In';
+    } else {
+      pillClass = 'logged-off'; pillText = '● Logged Off';
+    }
+
+    const rolePill = isHR
+      ? `<span class="role-pill-hr" style="font-size:0.66rem;">HR</span>`
+      : `<span class="role-pill-emp" style="font-size:0.66rem;">Emp</span>`;
+
+    const delFn = isHR
+      ? `confirmDeleteHR(${emp._hrId},'${emp.firstName} ${emp.lastName}')`
+      : `confirmDelete(${emp.id},'${emp.firstName} ${emp.lastName}')`;
+
+    const viewFn = isHR
+      ? `openEmpProfileModal(null,'hr',${emp._hrId})`
+      : `openEmpProfileModal(${emp.id},'employee',null)`;
+
+    return `<div class="ceo-emp-card">
+      <div class="c-avatar">${avatarHtml}</div>
+      <div class="c-meta">
+        <div class="c-name">${emp.firstName} ${emp.lastName}</div>
+        <div class="c-dept">${emp.department||'—'} · #${emp.empId} ${rolePill}</div>
+      </div>
+      <div class="c-actions">
+        <span class="spill ${pillClass}">${pillText}</span>
+        <button class="c-btn-view" onclick="${viewFn}">View</button>
+        <button class="c-btn-del" onclick="${delFn}">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ✅ Open employee profile modal
+async function openEmpProfileModal(empId, role, hrId) {
+  const modal = document.getElementById('empProfileModal');
+
+  if (role === 'employee') {
+    const emp = allEmployees.find(e => e.id === empId);
+    if (!emp) return;
+
+    const initials = ((emp.firstName||'')[0]+(emp.lastName||'')[0]).toUpperCase();
+    const av = document.getElementById('epAvatar');
+    av.innerHTML = emp.profileImage
+      ? `<img src="http://localhost:5000${emp.profileImage}" alt="${emp.firstName}"/>`
+      : initials;
+
+    document.getElementById('epName').textContent = emp.firstName + ' ' + emp.lastName;
+    document.getElementById('epSub').textContent  = (emp.department||'—') + ' · Employee #' + emp.empId;
+    document.getElementById('epRolePill').innerHTML = `<span class="role-pill-emp">Employee</span>`;
+
+    document.getElementById('epGrid').innerHTML = [
+      { l:'Age',         v: emp.age ? emp.age+' yrs' : '—' },
+      { l:'Salary',      v: emp.salary ? '₹'+Number(emp.salary).toLocaleString('en-IN') : '—' },
+      { l:'Phone',       v: emp.phone||'—' },
+      { l:'Email',       v: emp.email||'—' },
+      { l:'Department',  v: emp.department||'—' },
+      { l:'Employee ID', v: '#'+emp.empId },
+    ].map(f=>`<div class="ep-field"><div class="lbl">${f.l}</div><div class="val">${f.v}</div></div>`).join('');
+
+  } else {
+    // HR user
+    const hr = allHrUsers.find(u => u.id === hrId);
+    if (!hr) return;
+
+    const initials = ((hr.firstName||'')[0]+(hr.lastName||'')[0]).toUpperCase();
+    const av = document.getElementById('epAvatar');
+    av.innerHTML = hr.profileImage
+      ? `<img src="http://localhost:5000${hr.profileImage}" alt="${hr.firstName}"/>`
+      : initials;
+
+    document.getElementById('epName').textContent = hr.firstName + ' ' + (hr.lastName||'');
+    document.getElementById('epSub').textContent  = 'Human Resources · HR #' + (hr.hr_number||'');
+    document.getElementById('epRolePill').innerHTML = `<span class="role-pill-hr">HR Staff</span>`;
+
+    document.getElementById('epGrid').innerHTML = [
+      { l:'Phone',  v: hr.phone||'—' },
+      { l:'Email',  v: hr.email||'—' },
+      { l:'Age',    v: hr.age ? hr.age+' yrs' : '—' },
+      { l:'Salary', v: hr.salary ? '₹'+Number(hr.salary).toLocaleString('en-IN') : '—' },
+    ].map(f=>`<div class="ep-field"><div class="lbl">${f.l}</div><div class="val">${f.v}</div></div>`).join('');
+  }
+
+  modal.classList.add('open');
+}
+
+function closeEmpProfileModal(e) {
+  if (e.target.id === 'empProfileModal') {
+    document.getElementById('empProfileModal').classList.remove('open');
+  }
+}
+
+function filterCeoEmployees() {
+  const q      = document.getElementById('ceEmpSearch').value.toLowerCase();
+  const dept   = document.getElementById('ceDeptFilter').value;
+  const role   = document.getElementById('ceRoleFilter').value;
+
+  const empRows = allEmployees.map(e => ({ ...e, _role:'employee' }));
+  const hrRows  = allHrUsers.map((u, i) => ({
+    id:u.id, firstName:u.firstName, lastName:u.lastName,
+    empId:`HR ${u.hr_number||(i+1)}`, department:'HR',
+    age:u.age||null, salary:u.salary||null, phone:u.phone||null, email:u.email||null,
+    profileImage:u.profileImage||'', _role:'hr', _hrId:u.id,
+    hr_number: u.hr_number||(i+1)
+  }));
+
+  let combined = [...empRows, ...hrRows];
+  if (role === 'employee') combined = empRows;
+  if (role === 'hr')       combined = hrRows;
+  if (q)    combined = combined.filter(e => (e.firstName+' '+e.lastName).toLowerCase().includes(q));
+  if (dept) combined = combined.filter(e => (e.department||'HR') === dept);
+
+  renderCeoEmpTable(combined);
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+let pendingDeleteId   = null;
+let pendingDeleteType = 'employee'; // 'employee' or 'hr'
+
+function confirmDelete(empId, empName) {
+  pendingDeleteId   = empId;
+  pendingDeleteType = 'employee';
+  document.getElementById('confirmSubText').textContent = `"${empName}" will be permanently removed along with all their attendance records. This cannot be undone.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function confirmDeleteHR(hrId, hrName) {
+  pendingDeleteId   = hrId;
+  pendingDeleteType = 'hr';
+  document.getElementById('confirmSubText').textContent = `"${hrName}" (HR Staff) will be permanently removed from the system. This cannot be undone.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirm() { pendingDeleteId=null; document.getElementById('confirmModal').classList.remove('open'); }
+
+async function executeDelete() {
+  if (!pendingDeleteId) return;
+  try {
+    let res;
+    if (pendingDeleteType === 'hr') {
+      res = await fetch(`http://localhost:5000/hr/user/${pendingDeleteId}`, { method:'DELETE' });
+    } else {
+      res = await fetch(`http://localhost:5000/deleteEmployee/${pendingDeleteId}`, { method:'DELETE' });
+    }
+    if (!res.ok) throw new Error();
+    closeConfirm();
+    await loadAll();
+    await renderOverview();
+    showToast(pendingDeleteType === 'hr' ? 'HR staff removed successfully.' : 'Employee deleted successfully.');
+  } catch(e) { closeConfirm(); alert('Could not delete. Make sure the server is running.'); }
+}
+
+// ─── ATTENDANCE TABLES ────────────────────────────────────────────────────────
+
+// Tab switcher
+function switchAttTab(tab) {
+  document.getElementById('attPanelEmp').style.display = tab==='emp' ? '' : 'none';
+  document.getElementById('attPanelHR').style.display  = tab==='hr'  ? '' : 'none';
+  document.getElementById('attTabEmp').classList.toggle('active', tab==='emp');
+  document.getElementById('attTabHR').classList.toggle('active',  tab==='hr');
+}
+
+function renderCeoAttTable(list) {
+  document.getElementById('ceAttBody').innerHTML = list.map(a => {
+    const emp    = allEmployees.find(e=>e.id===a.employee_id)||{};
+    const status = a.check_out ? 'present' : 'partial';
+    return `<tr>
+      <td><strong>${emp.firstName||'?'} ${emp.lastName||''}</strong></td>
+      <td>${emp.department||'—'}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtDate(a.date)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_in)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_out)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtHours(a.total_hours)}</td>
+      <td><span class="badge ${status}">${status==='present'?'Complete':'Partial'}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">No records.</td></tr>';
+}
+
+// ✅ NEW: HR attendance table renderer
+function renderHRAttTable(list) {
+  document.getElementById('hrAttBody').innerHTML = list.map(a => {
+    // Find HR user name
+    const hrUser = allHrUsers.find(u => u.id === a.user_id) || {};
+    const name   = hrUser.firstName ? `${hrUser.firstName} ${hrUser.lastName||''}` : (a.firstName ? `${a.firstName} ${a.lastName||''}` : 'HR Staff');
+    const status = a.check_out ? 'present' : 'partial';
+    return `<tr>
+      <td><strong>${name}</strong></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtDate(a.date)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_in)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_out)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtHours(a.total_hours)}</td>
+      <td><span class="badge ${status}">${status==='present'?'Complete':'Partial'}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">No HR attendance records.</td></tr>';
+}
+
+function filterCeoAttendance() {
+  const q      = document.getElementById('ceAttSearch').value.toLowerCase();
+  const date   = document.getElementById('ceAttDate').value;
+  const status = document.getElementById('ceAttStatus').value;
+  renderCeoAttTable(allAttendance.filter(a => {
+    const emp = allEmployees.find(e=>e.id===a.employee_id)||{};
+    return (!q||(emp.firstName+' '+emp.lastName).toLowerCase().includes(q)) &&
+           (!date||a.date===date) &&
+           (!status||(status==='present'&&a.check_out)||(status==='partial'&&a.check_in&&!a.check_out));
+  }));
+}
+
+function filterHRAttendance() {
+  const q      = document.getElementById('hrAttSearch').value.toLowerCase();
+  const date   = document.getElementById('hrAttDate').value;
+  const status = document.getElementById('hrAttStatus').value;
+  renderHRAttTable(allHrAttendance.filter(a => {
+    const u    = allHrUsers.find(u=>u.id===a.user_id)||{};
+    const name = (u.firstName||a.firstName||'')+(u.lastName||a.lastName||'');
+    return (!q||name.toLowerCase().includes(q)) &&
+           (!date||a.date===date) &&
+           (!status||(status==='present'&&a.check_out)||(status==='partial'&&a.check_in&&!a.check_out));
+  }));
+}
+
+// ─── LEAVES ───────────────────────────────────────────────────────────────────
+async function loadCeoLeaves() {
+  try {
+    const res = await fetch('http://localhost:5000/leaves/all');
+    allCeoLeaves = await res.json();
+    renderCeoLeaves();
+  } catch(e) {
+    document.getElementById('ceoLeaveList').innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:16px 0;text-align:center;">Could not load leaves.</div>';
+  }
+}
+function renderCeoLeaves() {
+  const roleF   = document.getElementById('ceoLeaveRoleFilter').value;
+  const statusF = document.getElementById('ceoLeaveStatusFilter').value;
+  const typeF   = document.getElementById('ceoLeaveTypeFilter').value;
+  const searchQ = document.getElementById('ceoLeaveSearch').value.toLowerCase().trim();
+  let list = allCeoLeaves;
+  if (roleF)   list = list.filter(l=>l.applicant_role===roleF);
+  if (statusF) list = list.filter(l=>l.status===statusF);
+  if (typeF)   list = list.filter(l=>l.leave_type===typeF);
+  if (searchQ) list = list.filter(l=>(l.applicant_name||'').toLowerCase().includes(searchQ));
+  document.getElementById('lv-pending').textContent  = allCeoLeaves.filter(l=>l.status==='pending').length;
+  document.getElementById('lv-approved').textContent = allCeoLeaves.filter(l=>l.status==='approved').length;
+  document.getElementById('lv-rejected').textContent = allCeoLeaves.filter(l=>l.status==='rejected').length;
+  const pendingCount = allCeoLeaves.filter(l=>l.status==='pending').length;
+  const pb = document.getElementById('leavePendingBadge');
+  if (pendingCount>0) { pb.textContent=`${pendingCount} Pending Review`; pb.style.display=''; } else { pb.style.display='none'; }
+  const el = document.getElementById('ceoLeaveList');
+  if (!list.length) { el.innerHTML='<div style="color:var(--muted);font-size:0.85rem;padding:20px 0;text-align:center;">No leave requests match your filters.</div>'; return; }
+  const typeLabels = { sick:'Sick', casual:'Casual', earned:'Earned', unpaid:'Unpaid', other:'Other' };
+  el.innerHTML = list.map(l => {
+    const isPending   = l.status==='pending';
+    const statusColor = l.status==='approved'?'#3a9e4a':l.status==='rejected'?'var(--accent)':'#b8901e';
+    const statusBg    = l.status==='approved'?'rgba(107,200,122,0.12)':l.status==='rejected'?'rgba(200,80,42,0.1)':'rgba(212,168,67,0.12)';
+    const statusLabel = l.status==='approved'?'✓ Approved':l.status==='rejected'?'✕ Rejected':'⏳ Pending';
+    const roleColor   = l.applicant_role==='hr'?'#b8901e':'#3a9e4a';
+    const roleBg      = l.applicant_role==='hr'?'rgba(212,168,67,0.12)':'rgba(107,200,122,0.12)';
+    const roleLabel   = l.applicant_role==='hr'?'HR Staff':'Employee';
+    const from = l.from_date?String(l.from_date).slice(0,10):'';
+    const to   = l.to_date?String(l.to_date).slice(0,10):'';
+    const days = from&&to?Math.max(1,Math.round((new Date(to)-new Date(from))/(1000*60*60*24))+1):'?';
+    const reviewedLine = l.reviewed_by?`<div style="font-size:0.71rem;color:var(--muted);margin-top:6px;font-family:'IBM Plex Mono',monospace;">Reviewed by ${l.reviewed_by}</div>`:'';
+    const actionBtns  = isPending?`<div class="leave-actions"><button class="btn-approve" onclick="ceoReviewLeave(${l.id},'approved')">✓ Approve</button><button class="btn-reject" onclick="ceoReviewLeave(${l.id},'rejected')">✕ Reject</button></div>`:'';
+    return `<div class="leave-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-weight:700;font-size:0.92rem;color:var(--ink);">${l.applicant_name||'—'}</span>
+            <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;background:${roleBg};color:${roleColor};">${roleLabel}</span>
+            <span style="font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(0,0,0,0.05);color:var(--muted);">${typeLabels[l.leave_type]||l.leave_type}</span>
+          </div>
+          <div style="font-size:0.76rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;">${fmtDate(from)} → ${fmtDate(to)}<span style="margin-left:6px;font-weight:600;color:var(--ink);">${days} day${days!==1?'s':''}</span></div>
+        </div>
+        <span style="font-size:0.74rem;font-weight:700;padding:4px 11px;border-radius:12px;background:${statusBg};color:${statusColor};white-space:nowrap;flex-shrink:0;">${statusLabel}</span>
+      </div>
+      ${l.reason?`<div style="font-size:0.84rem;color:var(--muted);margin-top:10px;line-height:1.6;padding:10px 12px;background:rgba(0,0,0,0.025);border-radius:8px;">${l.reason}</div>`:''}
+      ${reviewedLine}${actionBtns}
+    </div>`;
+  }).join('');
+}
+async function ceoReviewLeave(id, status) {
+  try {
+    const res = await fetch(`http://localhost:5000/leaves/review/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ status, reviewed_by:`${currentUser.firstName} ${currentUser.lastName} (CEO)` })
+    });
+    const data = await res.json();
+    if (data.success) { showToast(`Leave ${status==='approved'?'approved':'rejected'} successfully.`); await loadCeoLeaves(); }
+    else { alert(data.message||'Failed to update leave.'); }
+  } catch(e) { alert('Could not update leave.'); }
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showSection(name) {
+  ['overview','employees','attendance','analytics','leaves'].forEach(s => {
+    document.getElementById('section-'+s).style.display = s===name?'':'none';
+  });
+  document.querySelectorAll('.sidebar__nav--item').forEach((el,i) => {
+    el.classList.toggle('active', ['overview','employees','attendance','analytics','leaves','profile'][i]===name);
+  });
+  document.getElementById('pageTitle').textContent = {
+    overview:'Executive Overview', employees:'All Employees',
+    attendance:'Attendance Records', analytics:'Analytics', leaves:'Leave Management'
+  }[name]||'CEO';
+  if (name==='analytics') { drawHoursChart(); renderPerformance(); }
+  if (name==='leaves')    { loadCeoLeaves(); }
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent='✓  '+msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+function logout() { sessionStorage.clear(); window.location.href='login.html'; }
+init();
+</script>
+</body>
+</html>

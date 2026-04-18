@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EMS — HR Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="shared.css"/>
+  <style>
+    .self-profile-modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.65);backdrop-filter:blur(6px);z-index:1000;justify-content:center;align-items:center;}
+    .self-profile-modal.open{display:flex;}
+    .sp-box{background:#fff;border-radius:18px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,0.18);}
+    .sp-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+    .sp-header h3{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);margin:0 0 4px;}
+    .sp-header p{font-size:0.82rem;color:var(--muted);margin:0;}
+    .sp-close{background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;padding:0;line-height:1;}
+    .sp-close:hover{color:var(--ink);}
+    .sp-avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);}
+    .sp-avatar-circle{width:64px;height:64px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;overflow:hidden;flex-shrink:0;}
+    .sp-av-title{font-weight:600;font-size:0.88rem;color:var(--ink);margin-bottom:4px;}
+    .sp-av-sub{font-size:0.76rem;color:var(--muted);margin-bottom:8px;}
+    .sp-file-btn{display:inline-block;padding:6px 12px;background:var(--ink);color:#fff;border-radius:6px;font-size:0.76rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;}
+    .sp-file-btn:hover{opacity:0.8;}
+    #sp_imageInput{display:none;}
+    .sp-role-tag{display:inline-block;font-size:0.72rem;font-weight:600;padding:4px 10px;border-radius:12px;margin-bottom:16px;}
+    .sp-role-tag.hr{background:rgba(212,168,67,0.12);color:#b8901e;}
+    .sp-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+    .sp-field{margin-bottom:14px;}
+    .sp-field.full{grid-column:1/-1;}
+    .sp-field label{display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;}
+    .sp-field input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+    .sp-field input:focus{border-color:var(--accent);}
+    .sp-actions{display:flex;gap:10px;margin-top:20px;}
+    .sp-btn-save{flex:1;padding:11px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;}
+    .sp-btn-save:hover{opacity:0.85;}
+    .sp-btn-cancel{flex:1;padding:11px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;cursor:pointer;}
+    .sp-btn-cancel:hover{border-color:var(--ink);}
+    .topbar-user{display:flex;align-items:center;gap:12px;}
+    .topbar-user-info{display:flex;flex-direction:column;align-items:flex-end;}
+    .topbar-user-name{font-size:0.88rem;font-weight:600;color:var(--ink);}
+    .topbar-user-dept{font-size:0.73rem;color:var(--muted);}
+    .topbar-avatar{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;overflow:hidden;cursor:pointer;flex-shrink:0;border:2px solid var(--border);transition:border-color 0.2s;}
+    .topbar-avatar:hover{border-color:var(--accent);}
+    .btn-logout-top{display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);color:var(--muted);padding:7px 12px;border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.15s;}
+    .btn-logout-top:hover{border-color:var(--accent);color:var(--accent);}
+    .toast{display:none;position:fixed;bottom:28px;right:28px;background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-size:0.84rem;font-weight:500;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.22);align-items:center;gap:8px;}
+    .toast.show{display:flex;}
+    .search-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+    .search-row input,.search-row select{padding:9px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;outline:none;background:#fff;transition:border-color 0.2s;}
+    .search-row input{flex:1;min-width:160px;}
+    .search-row input:focus,.search-row select:focus{border-color:var(--accent);}
+    .emp-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;max-height:520px;overflow-y:auto;padding-right:4px;}
+    .emp-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:13px;background:#fff;border:1px solid var(--border);transition:border-color 0.18s,box-shadow 0.18s,transform 0.15s;position:relative;}
+    .emp-card:hover{border-color:var(--accent);box-shadow:0 4px 18px rgba(200,80,42,0.1);transform:translateY(-1px);}
+    .emp-card .avatar{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.84rem;font-weight:700;flex-shrink:0;overflow:hidden;border:2px solid var(--border);}
+    .emp-card .avatar img{width:100%;height:100%;object-fit:cover;}
+    .emp-card .meta{flex:1;min-width:0;}
+    .emp-card .name{font-weight:700;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .emp-card .dept{font-size:0.73rem;color:var(--muted);margin-top:2px;}
+    .emp-card .card-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+    .status-pill{font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:12px;letter-spacing:0.03em;}
+    .status-pill.in{background:rgba(107,200,122,0.14);color:#3a9e4a;}
+    .status-pill.out{background:rgba(200,80,42,0.09);color:var(--accent);}
+    .status-pill.logged-off{background:rgba(42,109,200,0.12);color:#2a6dc8;}
+    .btn-view{font-size:0.7rem;background:none;border:1.5px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;white-space:nowrap;}
+    .btn-view:hover{border-color:var(--accent2);color:var(--accent2);}
+    .btn-del-card{font-size:0.7rem;background:none;border:1.5px solid rgba(200,80,42,0.3);color:var(--accent);padding:3px 9px;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all 0.15s;white-space:nowrap;}
+    .btn-del-card:hover{background:rgba(200,80,42,0.07);border-color:var(--accent);}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.65);backdrop-filter:blur(6px);z-index:900;justify-content:center;align-items:center;}
+    .modal-overlay.open{display:flex;}
+    .modal-box{background:#fff;border-radius:18px;width:580px;max-width:95vw;max-height:92vh;overflow-y:auto;padding:34px;box-shadow:0 24px 80px rgba(0,0,0,0.18);}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);}
+    .modal-sub{font-size:0.78rem;color:var(--muted);margin-top:2px;}
+    .fg{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;}
+    .ff{margin-bottom:14px;}
+    .ff.full{grid-column:1/-1;}
+    .ff label{display:block;font-size:0.71rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink);margin-bottom:5px;}
+    .ff input,.ff select{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;background:#fff;}
+    .ff input:focus,.ff select:focus{border-color:var(--accent);}
+    .ff .err{font-size:0.7rem;color:#c0392b;min-height:14px;margin-top:3px;}
+    .modal-btns{display:flex;gap:10px;margin-top:22px;}
+    .btn-save-m{flex:1;padding:12px;background:var(--ink);color:#fff;border:none;border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+    .btn-save-m:hover{opacity:0.85;}
+    .btn-cancel-m{flex:1;padding:12px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;cursor:pointer;transition:border-color 0.15s;}
+    .btn-cancel-m:hover{border-color:var(--ink);}
+    .btn-delete-m{padding:12px 20px;background:rgba(200,80,42,0.08);color:var(--accent);border:1.5px solid rgba(200,80,42,0.3);border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+    .btn-delete-m:hover{background:rgba(200,80,42,0.15);border-color:var(--accent);}
+    .p-avatar{width:72px;height:72px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;overflow:hidden;flex-shrink:0;border:3px solid var(--border);}
+    .p-avatar img{width:100%;height:100%;object-fit:cover;}
+    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+    .p-field{background:var(--card);border-radius:10px;padding:11px 14px;}
+    .p-field .lbl{font-size:0.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;}
+    .p-field .val{font-size:0.88rem;font-weight:600;color:var(--ink);margin-top:3px;}
+    .att-mini tr td,.att-mini tr th{padding:8px 10px;font-size:0.79rem;border-bottom:1px solid var(--border);}
+    .att-mini thead th{font-family:'IBM Plex Mono',monospace;font-size:0.64rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+    .att-mini tr:last-child td{border-bottom:none;}
+    .confirm-modal{display:none;position:fixed;inset:0;background:rgba(10,15,30,0.7);backdrop-filter:blur(8px);z-index:1100;justify-content:center;align-items:center;}
+    .confirm-modal.open{display:flex;}
+    .confirm-box{background:#fff;border-radius:18px;width:400px;max-width:92vw;padding:34px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.2);}
+    .confirm-icon{width:56px;height:56px;border-radius:50%;background:rgba(200,80,42,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+    .confirm-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--ink);margin-bottom:8px;}
+    .confirm-sub{font-size:0.84rem;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+    .confirm-btns{display:flex;gap:10px;}
+    .btn-confirm-del{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+    .btn-confirm-del:hover{opacity:0.85;}
+    .btn-confirm-cancel{flex:1;padding:12px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;cursor:pointer;transition:border-color 0.15s;}
+    .btn-confirm-cancel:hover{border-color:var(--ink);}
+    .chart-wrap{position:relative;height:200px;}
+    .grievance-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px 18px;margin-bottom:10px;transition:border-color 0.15s;}
+    .grievance-card:hover{border-color:rgba(200,80,42,0.3);}
+    .g-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+    .g-from{font-weight:700;font-size:0.88rem;color:var(--ink);}
+    .g-date{font-size:0.71rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+    .g-text{font-size:0.84rem;color:var(--muted);line-height:1.65;}
+    .g-status{font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:12px;}
+    .g-status.open{background:rgba(212,168,67,0.12);color:#b8901e;}
+    .g-status.resolved{background:rgba(107,200,122,0.12);color:#4ea85a;}
+    .btn-resolve{background:none;border:1.5px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:0.72rem;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;transition:all 0.15s;}
+    .btn-resolve:hover{border-color:#4ea85a;color:#4ea85a;}
+    .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+    .kpi-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;}
+    .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;}
+    .kpi-card.total::before{background:var(--accent2);}
+    .kpi-card.present::before{background:#6bc87a;}
+    .kpi-card.absent::before{background:var(--accent);}
+    .kpi-card .kpi-val{font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:900;color:var(--ink);line-height:1;}
+    .kpi-card .kpi-lbl{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:6px;}
+    .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6bc87a;margin-right:5px;animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+    .file-upload-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--card);border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;color:var(--muted);transition:all 0.15s;width:100%;}
+    .file-upload-label:hover{border-color:var(--accent);color:var(--accent);}
+    .file-input-hidden{display:none;}
+
+    /* ── Attendance button styles ── */
+    .att-btn{flex:1;padding:12px 20px;border:none;border-radius:10px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:opacity 0.2s,background 0.2s;}
+    .att-btn-checkin{background:var(--accent);color:#fff;}
+    .att-btn-checkin:disabled{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.15);cursor:not-allowed;}
+    .att-btn-checkout{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);}
+    .att-btn-checkout:disabled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.1);cursor:not-allowed;}
+  </style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <div class="brand-mark">EM</div>
+      <div><div class="logo-title">EMS</div><div class="logo-sub">HR Portal</div></div>
+    </div>
+    <nav class="sidebar__nav">
+      <a class="sidebar__nav--item active" href="#" onclick="showSection('overview')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('employees')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Employees
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('attendance')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Attendance
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('grievances')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Grievances
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('my-attendance')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>My Attendance
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="showSection('leaves')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 14h2M12 14h4M8 18h2"/></svg>Leaves
+      </a>
+      <a class="sidebar__nav--item" href="#" onclick="openSelfProfile()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My Profile
+      </a>
+    </nav>
+    <div class="sidebar__footer">
+      <div class="sidebar__footer--dot"></div>
+      <span id="sidebarUser">—</span>
+      <button class="btn-logout" onclick="logout()">Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar__left">
+        <h1 class="topbar__title" id="pageTitle">HR Overview</h1>
+        <span class="topbar__count"><span class="live-dot"></span>Live · auto-refreshes every 30s</span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="topbarName">—</div>
+          <div class="topbar-user-dept" id="topbarDept">Human Resources</div>
+        </div>
+        <div class="topbar-avatar" id="topbarAvatar" onclick="openSelfProfile()" title="Edit My Profile"></div>
+        <div class="role-badge hr">HR</div>
+        <button class="btn-logout-top" onclick="logout()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- OVERVIEW -->
+    <div id="section-overview" class="content-section">
+      <div class="kpi-row">
+        <div class="kpi-card total"><div class="kpi-val" id="s-total">—</div><div class="kpi-lbl">Total Employees</div></div>
+        <div class="kpi-card present"><div class="kpi-val" id="s-present">—</div><div class="kpi-lbl">Present Today</div></div>
+        <div class="kpi-card absent"><div class="kpi-val" id="s-absent">—</div><div class="kpi-lbl">Absent Today</div></div>
+      </div>
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel__header"><span>Today's Check-Ins</span><div class="panel__header--line"></div></div>
+          <div id="todayList" style="display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel__header"><span>Dept. Distribution</span><div class="panel__header--line"></div></div>
+          <div class="chart-wrap"><canvas id="deptChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div id="section-employees" class="content-section" style="display:none;">
+      <div class="panel">
+        <div class="panel__header"><span>All Employees</span><div class="panel__header--line"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div class="search-row" style="margin:0;flex:1;">
+            <input type="text" id="empSearch" placeholder="Search by name…" oninput="filterEmployees()"/>
+            <select id="deptFilter" onchange="filterEmployees()"><option value="">All Departments</option></select>
+          </div>
+          <button class="btn-primary" onclick="openAddModal()" style="display:flex;align-items:center;gap:6px;white-space:nowrap;padding:10px 18px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Employee
+          </button>
+        </div>
+        <div id="empCardList" class="emp-cards-grid"></div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div id="section-attendance" class="content-section" style="display:none;">
+      <div class="panel">
+        <div class="panel__header"><span>Attendance Records</span><div class="panel__header--line"></div></div>
+        <div class="search-row">
+          <input type="text" id="attSearch" placeholder="Search employee…" oninput="filterAttendance()"/>
+          <input type="date" id="attDate" onchange="filterAttendance()"/>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Employee</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Hours</th><th>Status</th></tr></thead>
+            <tbody id="attTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRIEVANCES -->
+    <div id="section-grievances" class="content-section" style="display:none;">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel__header"><span>Employee Grievances</span><div class="panel__header--line"></div></div>
+          <div id="grievanceList" style="max-height:540px;overflow-y:auto;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel__header"><span>Summary</span><div class="panel__header--line"></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div class="stat-card"><div class="val" id="g-total">0</div><div class="lbl">Total</div></div>
+            <div class="stat-card"><div class="val" id="g-open">0</div><div class="lbl">Open</div></div>
+          </div>
+          <div style="padding:14px;background:var(--card);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-size:0.78rem;font-weight:600;margin-bottom:6px;color:var(--ink);">About Grievances</div>
+            <div style="font-size:0.8rem;color:var(--muted);line-height:1.7;">Employees submit grievances from their portal. They appear here in real time. Mark them resolved once addressed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY ATTENDANCE -->
+    <div id="section-my-attendance" class="content-section" style="display:none;">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel__header"><span>Check In / Out</span><div class="panel__header--line"></div></div>
+          <div style="background:var(--ink);border-radius:16px;padding:28px 28px 24px;color:#fff;display:flex;flex-direction:column;gap:18px;">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:2.4rem;font-weight:500;letter-spacing:-1px;" id="hrClockDisplay">00:00:00</div>
+              <div style="font-size:0.82rem;color:rgba(255,255,255,0.45);font-family:'IBM Plex Mono',monospace;margin-top:2px;" id="hrDateDisplay">—</div>
+            </div>
+            <div id="hrStatusBadge" style="display:inline-flex;align-items:center;gap:6px;font-size:0.78rem;font-weight:600;padding:4px 10px;border-radius:20px;width:fit-content;background:rgba(200,80,42,0.15);color:var(--accent);">
+              <div style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>Not Checked In
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <!-- ✅ FIX: proper button classes for disabled state styling -->
+              <button id="hrBtnCheckin" onclick="hrDoCheckIn()" class="att-btn att-btn-checkin">Check In</button>
+              <button id="hrBtnCheckout" onclick="hrDoCheckOut()" class="att-btn att-btn-checkout" disabled>Check Out</button>
+            </div>
+            <div style="font-size:0.76rem;color:rgba(255,255,255,0.35);font-family:'IBM Plex Mono',monospace;" id="hrCheckInTimeLabel"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:500;" id="hrSumCheckin">—</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;">Check-In</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:500;" id="hrSumCheckout">—</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;">Check-Out</div>
+            </div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:500;" id="hrSumHours">—</div>
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.05em;">Hours</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel__header"><span>My Attendance History</span><div class="panel__header--line"></div></div>
+          <div id="hrAttHistory" style="max-height:440px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEAVES -->
+    <div id="section-leaves" class="content-section" style="display:none;">
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel__header"><span>Employee Leave Requests</span><div class="panel__header--line"></div></div>
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">Review and action pending leave requests from employees. HR leaves can only be approved by the CEO.</p>
+          <div style="margin-bottom:12px;">
+            <select id="leaveFilterStatus" onchange="renderLeavesHR()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.83rem;outline:none;background:#fff;">
+              <option value="">All Requests</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div id="empLeaveList" style="max-height:480px;overflow-y:auto;"></div>
+        </div>
+        <div class="panel">
+          <div class="panel__header"><span>My Leave Request</span><div class="panel__header--line"></div></div>
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">Apply for your own leave. Your requests will be reviewed by the CEO.</p>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;">Leave Type</label>
+            <select id="hrLeaveType" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;outline:none;background:#fff;">
+              <option value="casual">Casual Leave</option>
+              <option value="sick">Sick Leave</option>
+              <option value="earned">Earned Leave</option>
+              <option value="unpaid">Unpaid Leave</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;">From</label>
+              <input type="date" id="hrLeaveFrom" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;outline:none;background:#fff;"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;">To</label>
+              <input type="date" id="hrLeaveTo" style="width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;outline:none;background:#fff;"/>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink);margin-bottom:6px;">Reason</label>
+            <textarea id="hrLeaveReason" rows="3" placeholder="Briefly describe the reason…" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;outline:none;resize:vertical;"></textarea>
+          </div>
+          <button onclick="hrSubmitLeave()" style="background:var(--ink);color:#fff;border:none;padding:11px 24px;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer;width:100%;transition:opacity 0.15s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">Submit Leave Request</button>
+          <div style="margin-top:20px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">My Past Requests</div>
+            <div id="hrMyLeaveList" style="max-height:220px;overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD EMPLOYEE MODAL -->
+<div class="modal-overlay" id="addModal" onclick="closeAddModal(event)">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+      <div><div class="modal-title">Add New Employee</div><div class="modal-sub">Fill in the employee details below</div></div>
+      <button onclick="document.getElementById('addModal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--muted);line-height:1;">✕</button>
+    </div>
+    <div class="fg">
+      <div class="ff"><label>First Name</label><input id="a_fn" type="text" placeholder="Arun"/><div class="err" id="e_fn"></div></div>
+      <div class="ff"><label>Last Name</label><input id="a_ln" type="text" placeholder="Kumar"/><div class="err" id="e_ln"></div></div>
+      <div class="ff"><label>Employee ID</label><input id="a_eid" type="number" placeholder="1016"/><div class="err" id="e_eid"></div></div>
+      <div class="ff"><label>Age</label><input id="a_age" type="number" placeholder="28"/></div>
+      <div class="ff"><label>Department</label><input id="a_dept" type="text" placeholder="Engineering"/><div class="err" id="e_dept"></div></div>
+      <div class="ff"><label>Salary (₹)</label><input id="a_sal" type="number" placeholder="65000"/></div>
+      <div class="ff"><label>Phone</label><input id="a_ph" type="tel" placeholder="9876543210"/><div class="err" id="e_ph"></div></div>
+      <div class="ff"><label>Email</label><input id="a_em" type="email" placeholder="name@ems.com"/><div class="err" id="e_em"></div></div>
+      <div class="ff full">
+        <label>Profile Photo</label>
+        <label for="a_img" class="file-upload-label">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="a_img_label">Choose photo (optional)</span>
+        </label>
+        <input class="file-input-hidden" id="a_img" type="file" accept="image/*" onchange="document.getElementById('a_img_label').textContent=this.files[0]?this.files[0].name:'Choose photo (optional)'"/>
+      </div>
+      <div class="ff"><label>Login Username</label><input id="a_user" type="text" placeholder="emp016"/></div>
+      <div class="ff"><label>Login Password</label><input id="a_pass" type="password" placeholder="••••••"/></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-save-m" onclick="submitAddEmployee()">Add Employee</button>
+      <button class="btn-cancel-m" onclick="document.getElementById('addModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE PROFILE VIEW MODAL -->
+<div class="modal-overlay" id="profileModal" onclick="closeEmpProfile(event)">
+  <div class="modal-box">
+    <div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:4px;">
+      <div class="p-avatar" id="pAvatar"></div>
+      <div style="flex:1;">
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);" id="pName"></div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-top:3px;" id="pDept"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-delete-m" id="pDeleteBtn" onclick="confirmDeleteFromProfile()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete
+        </button>
+        <button onclick="document.getElementById('profileModal').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--muted);line-height:1;">✕</button>
+      </div>
+    </div>
+    <div class="profile-grid" id="pGrid"></div>
+    <div style="margin-top:20px;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Recent Attendance</div>
+      <table class="att-mini" style="width:100%;border-collapse:collapse;">
+        <thead><tr><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Hours</th></tr></thead>
+        <tbody id="pAttBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="confirm-modal" id="confirmModal">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <svg width="26" height="26" fill="none" stroke="#c8502a" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <div class="confirm-title">Delete Employee?</div>
+    <div class="confirm-sub" id="confirmSubText">This will permanently remove the employee and all their attendance records.</div>
+    <div class="confirm-btns">
+      <button class="btn-confirm-del" onclick="executeDelete()">Yes, Delete</button>
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SELF-PROFILE MODAL -->
+<div class="self-profile-modal" id="selfProfileModal" onclick="closeSelfProfile(event)">
+  <div class="sp-box">
+    <div class="sp-header">
+      <div><h3>My Profile</h3><p>Update your details and profile photo</p></div>
+      <button class="sp-close" onclick="closeSelfProfile()">✕</button>
+    </div>
+    <div class="sp-avatar-row">
+      <div class="sp-avatar-circle" id="sp_avatarPreview"></div>
+      <div class="sp-avatar-info">
+        <div class="sp-av-title">Profile Photo</div>
+        <div class="sp-av-sub">Your photo will be visible across the system.</div>
+        <label for="sp_imageInput" class="sp-file-btn">Choose Photo</label>
+        <input type="file" id="sp_imageInput" accept="image/*" onchange="sp_previewAvatar(event)"/>
+      </div>
+    </div>
+    <div id="sp_roleTag"></div>
+    <div class="sp-form-grid">
+      <div class="sp-field"><label>First Name</label><input id="sp_firstName" type="text"/></div>
+      <div class="sp-field"><label>Last Name</label><input id="sp_lastName" type="text"/></div>
+      <div class="sp-field full"><label>Phone (optional)</label><input id="sp_phone" type="tel" placeholder="—"/></div>
+      <div class="sp-field full"><label>Email (optional)</label><input id="sp_email" type="email" placeholder="—"/></div>
+    </div>
+    <div class="sp-actions">
+      <button class="sp-btn-save" onclick="saveSelfProfile()">Save Changes</button>
+      <button class="sp-btn-cancel" onclick="closeSelfProfile()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script src="shared-profile.js"></script>
+<script>
+let currentUser = null, allEmployees = [], allAttendance = [], deptChartInst = null;
+let grievances = JSON.parse(localStorage.getItem('ems_grievances')||'[]');
+let pendingDeleteId = null;
+
+// ✅ FIX: Convert decimal hours to "Xh Ym" format
+function fmtHours(val) {
+  if (!val && val !== 0) return '—';
+  const total = parseFloat(val);
+  if (isNaN(total)) return '—';
+  const h = Math.floor(total);
+  const m = Math.round((total - h) * 60);
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+async function init() {
+  const raw = sessionStorage.getItem('user');
+  if (!raw) { window.location.href='login.html'; return; }
+  currentUser = JSON.parse(raw);
+  window.currentUser = currentUser;
+  if (currentUser.role !== 'hr') { window.location.href='login.html'; return; }
+  document.getElementById('sidebarUser').textContent = currentUser.firstName+' '+currentUser.lastName;
+  document.getElementById('sp_roleTag').innerHTML = `<div class="sp-role-tag hr">● Human Resources</div>`;
+  updateTopbarUser();
+  await loadAll();
+  renderOverview();
+  setInterval(async () => { await loadAll(); renderOverview(); }, 30000);
+}
+
+function todayLocal() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+function fmtTime(t) {
+  if (!t) return '—';
+  const [h,m]=t.split(':').map(Number);
+  return `${(h%12||12)}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const clean=String(d).slice(0,10);
+  const [y,mo,day]=clean.split('-');
+  if(!y||!mo||!day) return String(d);
+  return `${day}-${mo}-${y}`;
+}
+
+async function loadAll() {
+  try {
+    const [eRes,aRes] = await Promise.all([fetch('http://localhost:5000/getEmployees'),fetch('http://localhost:5000/attendance/all')]);
+    allEmployees = await eRes.json();
+    allAttendance = await aRes.json();
+    allAttendance = allAttendance.map(a=>({...a, date: a.date ? String(a.date).slice(0,10) : a.date}));
+    populateDeptFilter();
+    renderEmpCards(allEmployees);
+    renderAttendanceTable(allAttendance);
+  } catch(e) { console.error(e); }
+}
+
+function renderOverview() {
+  const today = todayLocal();
+  const todayRecs = allAttendance.filter(a=>a.date===today);
+  const presentIds = new Set(todayRecs.map(a=>a.employee_id));
+  document.getElementById('s-total').textContent   = allEmployees.length;
+  document.getElementById('s-present').textContent = presentIds.size;
+  document.getElementById('s-absent').textContent  = allEmployees.length - presentIds.size;
+
+  const el = document.getElementById('todayList');
+  if (!todayRecs.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.84rem;padding:12px 0;text-align:center;">No check-ins yet today.</div>';
+  } else {
+    el.innerHTML = todayRecs.map(a=>{
+      const emp=allEmployees.find(e=>e.id===a.employee_id)||{};
+      const initials=((emp.firstName||'?')[0]+(emp.lastName||'')[0]).toUpperCase();
+      // ✅ FIX: use fmtHours for the badge
+      const hoursDisplay = a.total_hours ? fmtHours(a.total_hours) : 'In';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;background:var(--card);border:1px solid var(--border);">
+        <div style="width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;overflow:hidden;">
+          ${emp.profileImage?`<img src="http://localhost:5000${emp.profileImage}" style="width:100%;height:100%;object-fit:cover;" alt=""/>`:initials}
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:0.86rem;font-weight:600;color:var(--ink);">${emp.firstName||'?'} ${emp.lastName||''}</div>
+          <div style="font-size:0.71rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;">${fmtTime(a.check_in)} → ${a.check_out?fmtTime(a.check_out):'<span style="color:#4ea85a">Active</span>'}</div>
+        </div>
+        <span class="badge ${a.check_out?'present':'partial'}">${hoursDisplay}</span>
+      </div>`;
+    }).join('');
+  }
+  renderDeptChart();
+}
+
+function renderDeptChart() {
+  const depts={};
+  allEmployees.forEach(e=>{const d=e.department||'Other';depts[d]=(depts[d]||0)+1;});
+  const colors=['#c8502a','#2a6dc8','#d4a843','#6bc87a','#8b5cf6','#ec4899','#06b6d4'];
+  const ctx=document.getElementById('deptChart').getContext('2d');
+  if(deptChartInst)deptChartInst.destroy();
+  deptChartInst=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(depts),datasets:[{data:Object.values(depts),backgroundColor:colors.slice(0,Object.keys(depts).length),borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'IBM Plex Sans',size:11},color:'#6b6560',padding:12,boxWidth:10}}}}});
+}
+
+function populateDeptFilter() {
+  const depts=[...new Set(allEmployees.map(e=>e.department).filter(Boolean))];
+  const sel=document.getElementById('deptFilter');
+  while(sel.options.length>1) sel.remove(1);
+  depts.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;sel.appendChild(o);});
+}
+
+function renderEmpCards(list) {
+  const today = todayLocal();
+  // ✅ FIX: Build a map of employee_id → today's attendance record
+  const todayMap = {};
+  allAttendance.filter(a => a.date === today).forEach(a => { todayMap[a.employee_id] = a; });
+
+  const el = document.getElementById('empCardList');
+  if (!list.length) { el.innerHTML='<div style="color:var(--muted);grid-column:1/-1;padding:16px 0;text-align:center;">No employees found.</div>'; return; }
+  el.innerHTML = list.map(emp => {
+    const initials = ((emp.firstName||'')[0]+(emp.lastName||'')[0]).toUpperCase();
+    const avatarContent = emp.profileImage ? `<img src="http://localhost:5000${emp.profileImage}" alt="${emp.firstName}"/>` : initials;
+
+    const rec = todayMap[emp.id];
+    // ✅ Three states:
+    // No record today            → Out (absent, red)
+    // Checked in, not checked out → In (active, green)
+    // Checked in AND checked out  → Logged Off (done, blue)
+    let pillClass, pillText;
+    if (!rec || !rec.check_in) {
+      pillClass = 'out';       pillText = '● Out';
+    } else if (!rec.check_out) {
+      pillClass = 'in';        pillText = '● In';
+    } else {
+      pillClass = 'logged-off'; pillText = '● Logged Off';
+    }
+
+    return `<div class="emp-card">
+      <div class="avatar">${avatarContent}</div>
+      <div class="meta"><div class="name">${emp.firstName} ${emp.lastName}</div><div class="dept">${emp.department||'—'} · #${emp.empId}</div></div>
+      <div class="card-actions">
+        <span class="status-pill ${pillClass}">${pillText}</span>
+        <button class="btn-view" onclick="openEmpProfile(${emp.id})">View</button>
+        <button class="btn-del-card" onclick="confirmDelete(${emp.id},'${emp.firstName} ${emp.lastName}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterEmployees() {
+  const q=document.getElementById('empSearch').value.toLowerCase();
+  const dept=document.getElementById('deptFilter').value;
+  renderEmpCards(allEmployees.filter(e=>(!q||(e.firstName+' '+e.lastName).toLowerCase().includes(q))&&(!dept||e.department===dept)));
+}
+
+function renderAttendanceTable(list) {
+  document.getElementById('attTableBody').innerHTML=list.map(a=>{
+    const emp=allEmployees.find(e=>e.id===a.employee_id)||{};
+    const status=a.check_out?'present':(a.check_in?'partial':'absent');
+    // ✅ FIX: use fmtHours in attendance table
+    return `<tr>
+      <td><strong>${emp.firstName||'?'} ${emp.lastName||''}</strong></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtDate(a.date)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_in)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtTime(a.check_out)}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">${fmtHours(a.total_hours)}</td>
+      <td><span class="badge ${status}">${status==='present'?'Complete':status==='partial'?'Partial':'Absent'}</span></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px;">No records.</td></tr>';
+}
+
+function filterAttendance() {
+  const q=document.getElementById('attSearch').value.toLowerCase();
+  const date=document.getElementById('attDate').value;
+  renderAttendanceTable(allAttendance.filter(a=>{
+    const emp=allEmployees.find(e=>e.id===a.employee_id)||{};
+    return (!q||(emp.firstName+' '+emp.lastName).toLowerCase().includes(q))&&(!date||a.date===date);
+  }));
+}
+
+async function openEmpProfile(empId) {
+  const emp=allEmployees.find(e=>e.id===empId); if(!emp)return;
+  document.getElementById('pDeleteBtn').dataset.empId = empId;
+  document.getElementById('pDeleteBtn').dataset.empName = emp.firstName+' '+emp.lastName;
+  const initials=((emp.firstName||'')[0]+(emp.lastName||'')[0]).toUpperCase();
+  const av=document.getElementById('pAvatar');
+  av.innerHTML=emp.profileImage?`<img src="http://localhost:5000${emp.profileImage}" alt="${emp.firstName}"/>`:initials;
+  document.getElementById('pName').textContent=emp.firstName+' '+emp.lastName;
+  document.getElementById('pDept').textContent=(emp.department||'—')+' · Employee #'+emp.empId;
+  document.getElementById('pGrid').innerHTML=[
+    {l:'Age',v:emp.age+' yrs'},{l:'Salary',v:'₹'+Number(emp.salary||0).toLocaleString('en-IN')},
+    {l:'Phone',v:emp.phone},{l:'Email',v:emp.email}
+  ].map(f=>`<div class="p-field"><div class="lbl">${f.l}</div><div class="val">${f.v||'—'}</div></div>`).join('');
+  try {
+    const res=await fetch(`http://localhost:5000/attendance/employee/${empId}`);
+    const recs=await res.json();
+    // ✅ FIX: use fmtHours in employee profile attendance table
+    document.getElementById('pAttBody').innerHTML=recs.slice(0,8).map(r=>
+      `<tr><td>${fmtDate(r.date)}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:0.77rem;">${fmtTime(r.check_in)}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:0.77rem;">${fmtTime(r.check_out)}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:0.77rem;">${fmtHours(r.total_hours)}</td></tr>`
+    ).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:10px;">No records.</td></tr>';
+  } catch(e){}
+  document.getElementById('profileModal').classList.add('open');
+}
+
+function closeEmpProfile(e) { if(e.target.id==='profileModal') document.getElementById('profileModal').classList.remove('open'); }
+
+function confirmDelete(empId, empName) {
+  pendingDeleteId = empId;
+  document.getElementById('confirmSubText').textContent = `"${empName}" will be permanently removed along with all their attendance records. This cannot be undone.`;
+  document.getElementById('confirmModal').classList.add('open');
+}
+function confirmDeleteFromProfile() {
+  const btn = document.getElementById('pDeleteBtn');
+  const empId = parseInt(btn.dataset.empId);
+  const empName = btn.dataset.empName;
+  document.getElementById('profileModal').classList.remove('open');
+  setTimeout(() => confirmDelete(empId, empName), 150);
+}
+function closeConfirm() {
+  pendingDeleteId = null;
+  document.getElementById('confirmModal').classList.remove('open');
+}
+async function executeDelete() {
+  if (!pendingDeleteId) return;
+  try {
+    const res = await fetch(`http://localhost:5000/deleteEmployee/${pendingDeleteId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    closeConfirm(); await loadAll();
+    showToast('Employee deleted successfully.');
+  } catch(e) { closeConfirm(); alert('Could not delete employee.'); }
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeAddModal(e) { if(e.target.id==='addModal') document.getElementById('addModal').classList.remove('open'); }
+
+async function submitAddEmployee() {
+  const fn=document.getElementById('a_fn').value.trim();
+  const ln=document.getElementById('a_ln').value.trim();
+  const eid=document.getElementById('a_eid').value.trim();
+  const dept=document.getElementById('a_dept').value.trim();
+  const ph=document.getElementById('a_ph').value.trim();
+  const em=document.getElementById('a_em').value.trim();
+  let ok=true;
+  [{id:'a_fn',eid:'e_fn'},{id:'a_ln',eid:'e_ln'},{id:'a_eid',eid:'e_eid'},{id:'a_dept',eid:'e_dept'}].forEach(r=>{
+    if(!document.getElementById(r.id).value.trim()){document.getElementById(r.eid).textContent='Required';ok=false;}
+    else document.getElementById(r.eid).textContent='';
+  });
+  if(!/^[0-9]{10}$/.test(ph)){document.getElementById('e_ph').textContent='10 digits required';ok=false;}else document.getElementById('e_ph').textContent='';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){document.getElementById('e_em').textContent='Invalid email';ok=false;}else document.getElementById('e_em').textContent='';
+  if(!ok)return;
+  const fd=new FormData();
+  ['firstName','lastName','empId','age','department','salary','phone','email'].forEach((k,i)=>{
+    fd.append(k,[fn,ln,eid,document.getElementById('a_age').value,dept,document.getElementById('a_sal').value,ph,em][i]);
+  });
+  const img=document.getElementById('a_img').files[0];
+  if(img)fd.append('profileImage',img);
+  try {
+    const res=await fetch('http://localhost:5000/addEmployee',{method:'POST',body:fd});
+    const data=await res.json();
+    const uname=document.getElementById('a_user').value.trim();
+    const upass=document.getElementById('a_pass').value.trim();
+    if(uname&&upass){
+      await fetch('http://localhost:5000/addUser',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:uname,password:upass,role:'employee',firstName:fn,lastName:ln,employee_id:data.id})});
+    }
+    await loadAll();
+    document.getElementById('addModal').classList.remove('open');
+    showToast('Employee added successfully!');
+  } catch(e){alert('Could not add employee.');}
+}
+
+function renderGrievances() {
+  grievances=JSON.parse(localStorage.getItem('ems_grievances')||'[]');
+  document.getElementById('g-total').textContent=grievances.length;
+  document.getElementById('g-open').textContent=grievances.filter(g=>g.status==='open').length;
+  const el=document.getElementById('grievanceList');
+  if(!grievances.length){el.innerHTML='<div style="color:var(--muted);font-size:0.84rem;padding:12px 0;text-align:center;">No grievances submitted yet.</div>';return;}
+  el.innerHTML=grievances.slice().reverse().map((g,i)=>{
+    const idx=grievances.length-1-i;
+    return `<div class="grievance-card">
+      <div class="g-meta"><span class="g-from">${g.from||'Anonymous'}</span>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="g-date">${g.date}</span><span class="g-status ${g.status}">${g.status==='open'?'Open':'Resolved'}</span>
+          ${g.status==='open'?`<button class="btn-resolve" onclick="resolveGrievance(${idx})">Mark Resolved</button>`:''}
+        </div>
+      </div>
+      <div class="g-text">${g.text}</div>
+    </div>`;
+  }).join('');
+}
+
+function resolveGrievance(idx) {
+  grievances[idx].status='resolved';
+  localStorage.setItem('ems_grievances',JSON.stringify(grievances));
+  renderGrievances();
+  showToast('Grievance marked as resolved.');
+}
+
+function showSection(name) {
+  ['overview','employees','attendance','grievances','my-attendance','leaves'].forEach(s=>{
+    document.getElementById('section-'+s).style.display=s===name?'':'none';
+  });
+  document.querySelectorAll('.sidebar__nav--item').forEach((el,i)=>{
+    el.classList.toggle('active',['overview','employees','attendance','grievances','my-attendance','leaves','profile'][i]===name);
+  });
+  document.getElementById('pageTitle').textContent={overview:'HR Overview',employees:'Employees',attendance:'Attendance Records',grievances:'Employee Grievances','my-attendance':'My Attendance',leaves:'Leave Management'}[name]||'HR';
+  if(name==='grievances')renderGrievances();
+  if(name==='my-attendance'){startHrClock();hrCheckTodayStatus();loadHrAttHistory();}
+  if(name==='leaves'){loadEmpLeaves();loadHrMyLeaves();}
+}
+
+// ── HR OWN ATTENDANCE ──
+let hrClockTimer = null;
+
+function startHrClock() {
+  if (hrClockTimer) return;
+  function tick() {
+    const now = new Date();
+    document.getElementById('hrClockDisplay').textContent = now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+    document.getElementById('hrDateDisplay').textContent  = now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  }
+  tick(); hrClockTimer = setInterval(tick, 1000);
+}
+
+// ✅ FIX: helper to set button states cleanly
+function setAttendanceBtns(state) {
+  // state: 'none' | 'checkedIn' | 'checkedOut'
+  const btnIn  = document.getElementById('hrBtnCheckin');
+  const btnOut = document.getElementById('hrBtnCheckout');
+  if (state === 'none') {
+    btnIn.disabled  = false;
+    btnOut.disabled = true;
+  } else if (state === 'checkedIn') {
+    btnIn.disabled  = true;
+    btnOut.disabled = false;
+  } else if (state === 'checkedOut') {
+    // ✅ Both buttons disabled after checkout — matches the screenshot
+    btnIn.disabled  = true;
+    btnOut.disabled = true;
+  }
+}
+
+async function hrCheckTodayStatus() {
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch(`http://localhost:5000/hr/attendance/today/${uid}`);
+    const data = await res.json();
+    if (data && data.check_in) {
+      const co = !!data.check_out;
+      setAttendanceBtns(co ? 'checkedOut' : 'checkedIn');
+      const badge = document.getElementById('hrStatusBadge');
+      if (co) {
+        badge.style.background='rgba(200,80,42,0.15)'; badge.style.color='var(--accent)';
+        badge.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>Checked Out';
+      } else {
+        badge.style.background='rgba(107,200,122,0.15)'; badge.style.color='#6bc87a';
+        badge.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>Checked In';
+      }
+      document.getElementById('hrCheckInTimeLabel').textContent = 'Checked in at ' + fmtTime(data.check_in);
+      document.getElementById('hrSumCheckin').textContent  = fmtTime(data.check_in);
+      document.getElementById('hrSumCheckout').textContent = data.check_out ? fmtTime(data.check_out) : '—';
+      // ✅ FIX: use fmtHours instead of raw decimal
+      document.getElementById('hrSumHours').textContent = data.total_hours ? fmtHours(data.total_hours) : '—';
+    } else {
+      setAttendanceBtns('none');
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function hrDoCheckIn() {
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch('http://localhost:5000/hr/attendance/checkin', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id: uid })
+    });
+    const data = await res.json();
+    if (data.success) {
+      setAttendanceBtns('checkedIn');
+      const badge = document.getElementById('hrStatusBadge');
+      badge.style.background='rgba(107,200,122,0.15)'; badge.style.color='#6bc87a';
+      badge.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>Checked In';
+      document.getElementById('hrCheckInTimeLabel').textContent = 'Checked in at ' + fmtTime(data.time);
+      document.getElementById('hrSumCheckin').textContent = fmtTime(data.time);
+      await loadHrAttHistory();
+      showToast('Checked in successfully!');
+    } else { alert(data.message || 'Check-in failed.'); }
+  } catch(e) { alert('Server error. Make sure server is running.'); }
+}
+
+async function hrDoCheckOut() {
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch('http://localhost:5000/hr/attendance/checkout', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ user_id: uid })
+    });
+    const data = await res.json();
+    if (data.success) {
+      // ✅ FIX: both buttons disabled after checkout
+      setAttendanceBtns('checkedOut');
+      const badge = document.getElementById('hrStatusBadge');
+      badge.style.background='rgba(200,80,42,0.15)'; badge.style.color='var(--accent)';
+      badge.innerHTML='<div style="width:6px;height:6px;border-radius:50%;background:currentColor;"></div>Checked Out';
+      document.getElementById('hrSumCheckout').textContent = fmtTime(data.time);
+      // ✅ FIX: use fmtHours instead of raw decimal
+      document.getElementById('hrSumHours').textContent = fmtHours(data.total_hours);
+      await loadHrAttHistory();
+      showToast('Checked out successfully!');
+    } else { alert(data.message || 'Check-out failed.'); }
+  } catch(e) { alert('Server error.'); }
+}
+
+async function loadHrAttHistory() {
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch(`http://localhost:5000/hr/attendance/history/${uid}`);
+    const recs = await res.json();
+    const el = document.getElementById('hrAttHistory');
+    if (!recs.length) { el.innerHTML='<div style="color:var(--muted);font-size:0.85rem;padding:10px 0;">No attendance records yet.</div>'; return; }
+    el.innerHTML = recs.map(r => {
+      const timeRange = r.check_in && r.check_out
+        ? `${fmtTime(r.check_in)} → ${fmtTime(r.check_out)}`
+        : r.check_in ? `${fmtTime(r.check_in)} → Active` : '—';
+      // ✅ FIX: use fmtHours in history list
+      const hoursLabel = r.total_hours ? fmtHours(r.total_hours) : (r.check_in ? 'Active' : 'Absent');
+      const color = r.total_hours ? '#6bc87a' : (r.check_in ? '#d4a843' : 'var(--accent)');
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:10px;background:var(--card);border:1px solid var(--border);margin-bottom:8px;">
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;">${fmtDate(r.date)}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.74rem;color:var(--muted);margin-top:2px;">${timeRange}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:0.88rem;color:${color};">${hoursLabel}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ── HR LEAVES ──
+let allEmpLeaves = [];
+
+async function loadEmpLeaves() {
+  try {
+    const res = await fetch('http://localhost:5000/leaves/employees');
+    allEmpLeaves = await res.json();
+    renderLeavesHR();
+  } catch(e) { document.getElementById('empLeaveList').innerHTML='<div style="color:var(--muted);font-size:0.85rem;padding:10px 0;">Could not load leaves.</div>'; }
+}
+
+function renderLeavesHR() {
+  const filter = document.getElementById('leaveFilterStatus').value;
+  const list = filter ? allEmpLeaves.filter(l=>l.status===filter) : allEmpLeaves;
+  const el = document.getElementById('empLeaveList');
+  if (!list.length) { el.innerHTML='<div style="color:var(--muted);font-size:0.85rem;padding:10px 0;">No leave requests found.</div>'; return; }
+  const typeLabels = { sick:'Sick', casual:'Casual', earned:'Earned', unpaid:'Unpaid', other:'Other' };
+  el.innerHTML = list.map(l => {
+    const statusColor = l.status==='approved'?'#4ea85a':l.status==='rejected'?'var(--accent)':'#b8901e';
+    const statusBg    = l.status==='approved'?'rgba(107,200,122,0.12)':l.status==='rejected'?'rgba(200,80,42,0.1)':'rgba(212,168,67,0.12)';
+    const days = Math.max(1,Math.round((new Date(l.to_date)-new Date(l.from_date))/(1000*60*60*24))+1);
+    const actionBtns = l.status==='pending'
+      ? `<div style="display:flex;gap:8px;margin-top:10px;">
+          <button onclick="hrReviewLeave(${l.id},'approved')" style="flex:1;padding:7px;background:rgba(107,200,122,0.12);color:#3a9e4a;border:1.5px solid rgba(107,200,122,0.4);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;">✓ Approve</button>
+          <button onclick="hrReviewLeave(${l.id},'rejected')" style="flex:1;padding:7px;background:rgba(200,80,42,0.08);color:var(--accent);border:1.5px solid rgba(200,80,42,0.3);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;">✕ Reject</button>
+        </div>` : '';
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;color:var(--ink);">${l.applicant_name||'—'}</div>
+          <div style="font-size:0.72rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;">${typeLabels[l.leave_type]||l.leave_type} · ${fmtDate(l.from_date)} → ${fmtDate(l.to_date)} (${days}d)</div>
+        </div>
+        <span style="font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:12px;background:${statusBg};color:${statusColor};white-space:nowrap;">${l.status==='pending'?'Pending':l.status==='approved'?'Approved':'Rejected'}</span>
+      </div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-top:6px;line-height:1.5;">${l.reason||'—'}</div>
+      ${l.reviewed_by?`<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;font-family:'IBM Plex Mono',monospace;">Reviewed by ${l.reviewed_by}</div>`:''}
+      ${actionBtns}
+    </div>`;
+  }).join('');
+}
+
+async function hrReviewLeave(id, status) {
+  try {
+    const res = await fetch(`http://localhost:5000/leaves/review/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ status, reviewed_by: currentUser.firstName+' '+currentUser.lastName+' (HR)' })
+    });
+    const data = await res.json();
+    if (data.success) { showToast('Leave '+status+' successfully.'); await loadEmpLeaves(); }
+  } catch(e) { alert('Could not update leave.'); }
+}
+
+async function hrSubmitLeave() {
+  const leaveType = document.getElementById('hrLeaveType').value;
+  const fromDate  = document.getElementById('hrLeaveFrom').value;
+  const toDate    = document.getElementById('hrLeaveTo').value;
+  const reason    = document.getElementById('hrLeaveReason').value.trim();
+  if (!fromDate || !toDate) { alert('Please select from and to dates.'); return; }
+  if (!reason) { alert('Please provide a reason.'); return; }
+  if (fromDate > toDate) { alert('From date cannot be after To date.'); return; }
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch('http://localhost:5000/leaves/apply', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        applicant_id: uid, applicant_role:'hr', employee_db_id: null,
+        applicant_name: currentUser.firstName+' '+currentUser.lastName+' (HR)',
+        leave_type: leaveType, from_date: fromDate, to_date: toDate, reason
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('hrLeaveFrom').value='';
+      document.getElementById('hrLeaveTo').value='';
+      document.getElementById('hrLeaveReason').value='';
+      showToast('Leave request submitted! CEO will review.');
+      loadHrMyLeaves();
+    } else { alert(data.message||'Failed to submit.'); }
+  } catch(e) { alert('Server error.'); }
+}
+
+async function loadHrMyLeaves() {
+  try {
+    const uid = currentUser.userId || currentUser.id;
+    const res = await fetch(`http://localhost:5000/leaves/mine/${uid}`);
+    const leaves = await res.json();
+    const el = document.getElementById('hrMyLeaveList');
+    if (!leaves.length) { el.innerHTML='<div style="color:var(--muted);font-size:0.82rem;padding:6px 0;">No requests yet.</div>'; return; }
+    const typeLabels = { sick:'Sick', casual:'Casual', earned:'Earned', unpaid:'Unpaid', other:'Other' };
+    el.innerHTML = leaves.map(l => {
+      const statusColor = l.status==='approved'?'#4ea85a':l.status==='rejected'?'var(--accent)':'#b8901e';
+      const statusBg    = l.status==='approved'?'rgba(107,200,122,0.12)':l.status==='rejected'?'rgba(200,80,42,0.1)':'rgba(212,168,67,0.12)';
+      const days = Math.max(1,Math.round((new Date(l.to_date)-new Date(l.from_date))/(1000*60*60*24))+1);
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+          <div style="font-size:0.82rem;font-weight:600;color:var(--ink);">${typeLabels[l.leave_type]||l.leave_type} · ${days}d</div>
+          <span style="font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:10px;background:${statusBg};color:${statusColor};white-space:nowrap;">${l.status==='pending'?'Pending':l.status==='approved'?'Approved':'Rejected'}</span>
+        </div>
+        <div style="font-size:0.71rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;">${fmtDate(l.from_date)} → ${fmtDate(l.to_date)}</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">${l.reason||'—'}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent='✓  '+msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function logout(){sessionStorage.clear();window.location.href='login.html';}
+init();
+</script>
+</body>
+</html>
