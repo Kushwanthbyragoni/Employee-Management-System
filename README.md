@@ -226,5 +226,5 @@ This project is licensed under the MIT License.
 ---
 
 <div align="center">
-  <p>Built with ❤️ · <strong>Employee Management System 2024</strong></p>
+  <p>Built with ❤️ · <strong>Employee Management System 2026</strong></p>
 </div>
